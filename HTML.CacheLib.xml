@@ -1,0 +1,2667 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.2 (Build 651)" ts="2017-10-06 22:37:18">
+<Class name="HTML.CacheLib">
+<Description><![CDATA[
+
+<br>Скрипт(JS):
+<br> &lt;script  type="text/javascript"  src='HTML.CacheLib.cls'&gt;&lt;/script&gt; 
+<br> 
+<br> <!--  <script language="JavaScript" type="text/javascript" src="HTML.CacheLib.cls"></script>  -->
+Описание:
+1) Реализована трансляция  Cache` классов в JS функции глобальные. 
+2) Реализована трансляция  Cache` классов в  прототипы JS при инициализации страницы и в коде
+3) Реализована функция динамического подключения библиотек (js и css - файлы)
+4) Реализована функция динамического подключения прототипов и глобальных функция.
+5) Реализована возможность запуска класс методов с передачей в функцией (callback) обработки результата в качестве аргумента.
+<br> 
+
+<pre>
+Динамическое подключение библиотек в JS коде:
+    а) Подключаем базовую библиотеку на  CSP странице:
+         &lt;script src='HTML.CacheLib.cls' type='text/javascript' &gt;&lt;/script&gt;
+    б) Подключение библиотек JS,CSS,cls:
+</pre>
+<example> 
+<script language="JavaScript">
+   // Подключаем библиотеку JS из класса
+   includeClass('HTML.js.WebGL.BabylonJS.babylon.cls','javascript');
+   // Подключаем JS библиотеку из файла
+   includeFile('https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js','javascript');
+   // Подключаем JS библиотеку из файла
+   includeFile('https://jQuery.min.js');
+   // Подключаем CSS библиотеку из файла
+   includeFile('https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css','css');
+  </script>
+</example> 
+<pre>
+
+Примечание : Функции расположенные внутри, подключаемых классов, станут доступны после полной инициализации страницы.
+
+
+Применение функции runMethod :
+
+     а) Создаем классметод:
+</pre>
+<example> 
+  Class User.test
+  {
+    ClassMethod Test1 (arg) As %String
+    {
+         w "Test Message:" _arg
+         q ""
+     }
+  }
+</example> 
+<pre>
+
+    б) Подключаем базовую библиотеку на  CSP странице:
+         &lt;script src='HTML.CacheLib.cls' type='text/javascript' &gt;&lt;/script&gt;
+    в) Синхронный вызов класс метода:
+</pre>
+<example> 
+                <script language="JavaScript">
+                      alert ( runMethod('User.test.Test1', 'arg1233') );
+                </script>
+</example> 
+     г) Асинхронный вызов класс метода:
+<example> 
+ <script language="JavaScript">
+    /// функция обработки ответа
+    resultFun=function(txt){    alert(txt);       }
+    runMethod('User.test.Test1',resultFun,'arg1233');
+ </script>
+</example> 
+     д) Вызов класс метода Test2 расположенного на странице CSP:
+<example> 
+  <script language="JavaScript">
+    /// функция обработки ответа
+    resultFun=function(txt){    alert(txt);       }
+    runMethod('Test2',resultFun,'arg1233');
+  </script>
+</example> 
+
+Расположение глобальной JS функции в Cache` классе:
+     а) Создаем класс:
+<example> 
+  Class User.test  Extends HTML.CacheLib
+  {
+     ClassMethod Test1(fff,ddd) [ Language = cache, WebMethod ]
+     {
+        w fff_"---"_ddd
+     }
+     ClassMethod Test2(Arg1,Arg2) As %String [ Language = cache, WebMethod ]
+     {
+        q Arg1_"----Вар2----"_Arg2
+     }
+     ClientMethod Test3(Arg1) As %String [ Language = javascript, WebMethod ]
+     {
+        alert(Arg1);
+     }
+  }
+</example> 
+<pre>
+
+    б) Подключаем базовую библиотеку на  CSP странице:
+         <script src='User.test.cls' type='text/javascript' ></script>
+    в) Синхронный вызов класс метода:
+                <script language="JavaScript">
+                      alert (Test1('arg1233'));
+                </script>
+     г) Асинхронный вызов класс метода:
+</pre>
+<example> 
+ <script language="JavaScript">
+    /// функция обработки ответа
+    resultFun=function(txt){ alert(txt); }
+    Test1(resultFun,'arg1233');
+ </script>
+</example> 
+<pre>
+Примечание : в ClassMethod и ClientMethod необходимо указывать  параметр WebMethod  и язык написания кода Language = javascript .
+Создание JS прототипа в Cache` классе
+         а) Создаем класс:
+</pre>
+<example> 
+ Class User.Prototyp Extends (HTML.CacheLib, User.Prototype2, User.NewClass2)
+ {
+  /// Альтернативное название прототипа.
+  /// Если этого параметра нет, тогда имя прототипа
+  /// берется из имени класса “Prototyp”
+  Parameter ClassName = "ClassName";
+  /// Публичные переменные прототипа
+  Property Pole1 As %String [ InitialExpression = "Value1", Internal ];
+  Property Pole2 As %String [ InitialExpression = "Value2", Internal ];
+  Property Pole3 As %String [ Internal ];
+  /// Конструктор прототипа
+  ClientMethod Prototyp(arg1 = "") As %String [ Internal, Language = javascript ]
+  {
+     this.Pole1=arg1;
+  }
+  ClassMethod Test() As %String [ Internal, Language = cache ]
+  {
+     zw
+     q ""
+  }
+  ClientMethod Test3(arg1 = "") As %String [ Internal, Language = javascript ]
+  {
+    alert(arg1);
+  }
+ }
+</example> 
+<pre>
+
+    б) Подключаем базовую библиотеку на  CSP странице:
+         <script src='User.Prototyp.cls' type='text/javascript' ></script>
+    в)  Применение прототипа:
+</pre>
+<example> 
+   <script  language="JavaScript">
+     var edit=new Prototyp('Test-Prototyp');// Создаем экземпляр прототипа
+     alert(edit.Pole1); // обращение к переменной
+     alert(edit.Test());// синхронный вызов функции
+     retunFun=function(txt){ alert(txt); }
+     edit.Test(retunFun); // асинхронный вызов
+     edit.Test3(retunFun,'Args123')// асинхронный вызов
+  </script>
+</example> 
+
+<pre>
+Примечание :
+1)       При наследовании прототипов все свойства и методы родителей, так же наследуются.
+2)       Для включения элемента в состав прототипа необходимо указать параметр “ Internal” и название языка написания кода “Language = javascript”.
+3)       Из класс метода Cache невозможно напрямую обращаться к полям прототипа. В ClientMethod  поля прототипа доступны по JS правилам.
+4)       Если в прототипе описана глобальная функция (с параметром WebMethod  ) она будет интерпретирована как глобальная функция
+Пример создания глобальной переменной JS в классе Cache
+Добавляем в параметр Property свойство "[ServerOnly = 1]" при интерпритации класса это поле превратится в глобальную JS переменную.
+</pre>
+<example> 
+ Class Demo.Three.Panarama2 Extends %CSP.Page
+ {
+     Property GlobalVar1 As %String [ InitialExpression = {$h}, ServerOnly = 1 ];
+     Property GlobalVar2 As %String [ InitialExpression = "Тестовый текст инициируется при загрузке страницы", ServerOnly = 1 ];
+     ClientMethod MyAlert(arg) [ Language = javascript, WebMethod ]
+     {
+       alert(arg);
+     }
+     ClassMethod OnPage() As %Status
+     {
+        &html<
+          <script src='HTML.CacheLib.cls' type='text/javascript' ></script> 
+          <script type='text/javascript' >
+             alert(GlobalVar1);
+             MyAlert(GlobalVar2);
+          </script> 
+        >
+        q $$$OK
+     }
+ }
+</example> 
+<pre>
+
+Пример вызова Cache сода из JS клиент метода
+Добавляем в параметр Property свойство "[ServerOnly = 1]" при интерпритации класса это поле превратится в глобальную JS переменную.
+</pre>
+<example> 
+  Class Demo.Delete Extends %CSP.Page
+  {
+          ClientMethod MyAlert(arg) [ Language = javascript, WebMethod ]
+          {
+              //  /*(  'Команда cache'  )*/
+              // Выполнить однострочную команду 
+              alert(' /*( w $zdt($h))*/ '+arg)
+          }
+          ClassMethod OnPage() As %Status
+          {
+              &html<
+                  <script src='HTML.CacheLib.cls' type='text/javascript' ></script> 
+                   <script language='javascript'>
+                      MyAlert('Тестовое сообщение');
+                 </script>
+              >
+              Quit $$$OK
+          }
+    }
+ </example>
+         
+  <h3>Создание собственного HTML элемента в Cache классе (работа с прототипами). </h3>
+  Создаем прототип HTML элемента:
+ <example>
+  Class User.Prototyp2 Extends HTML.CacheLib
+  {
+  /// Название класса для создания элемента из JS
+  Parameter ClassName = "TestHtmlTag";
+  /// имя тэга <my-input>0</my-input>
+  Parameter tagName = "my-input";
+  Property timer As %Integer [ InitialExpression = 0, Internal ];
+  /// содержимое Тэга
+  Property innerHTML As %String [ InitialExpression = "Value1", Internal ];
+  /// JS Конструктор HTML элемента
+  ClientMethod prototyp2(arg1 = "") As %String [ Internal, Language = javascript ]
+  {
+    this.Pole1=arg1;
+  }
+  /// запуск таймера
+  ClientMethod attachedCallback() As %String [ Internal, Language = javascript ]
+  {
+     setInterval(this.tick.bind(this), 1000);
+  }
+  /// Функция срабатывает после создания элемента (инициализация)
+  ClientMethod createdCallback() As %String [ Internal, Language = javascript ]
+  {
+     this.timer = 0;
+  }
+  /// функция инкремента
+  ClientMethod tick() As %String [ Internal, Language = javascript ]
+  {
+      this.timer++;
+      this.innerHTML = this.timer;
+  }
+  
+  }
+  
+ </example>
+  Создание HTML элемента в CSP файле
+ <example>
+  <html>
+  <head>
+  <title> Cache Server Page </title>
+  </head>
+  <body>
+    <script src='HTML.CacheLib.cls' type='text/javascript' ></script>
+    <script src='User.Prototyp2.cls' type='text/javascript' ></script>
+    <my-input>222222</my-input>
+  </body>
+  </html>
+ </example>
+ <h3> Подключение JS библиотек из классов </h3>
+ <example>
+
+ /// Подключаемый класс
+ Class User.Test
+ {
+    ClientMethod MyAlert(txt) [ Language = javascript, WebMethod ]
+    {
+       alert(txt);
+    }
+ 
+ }
+
+   /// Применение  <include-js src="User.Test"></include-js>
+   Class User.includeTest Extends %CSP.Page
+   {
+   
+   ClassMethod OnPage() As %Status
+   {
+     &html<
+       <script src='HTML.CacheLib.cls' type='text/javascript' ></script>       
+       <include-js src="User.Test"></include-js>
+       <include-css src='User.Test'></include-css>
+     >
+    &html<
+       <script type='text/javascript' >
+         MyAlert('ssssssssssss');
+      </script>
+     >
+      Quit $$$OK
+   }
+   
+   }
+ </example>]]></Description>
+<Super>%CSP.Page</Super>
+<TimeChanged>64562,80829.022172</TimeChanged>
+<TimeCreated>64555,56521.47789</TimeCreated>
+
+<Method name="OnPreHTTP">
+<ClassMethod>1</ClassMethod>
+<ReturnType>%Library.Boolean</ReturnType>
+<Implementation><![CDATA[
+     ; s %response.CharSet="CP1251"
+     if %request.Get("cspIntRunMethod",0)=1 {
+         Do %response.SetHeader("Content-Type","text/plain")   
+         q 1   
+     }
+     Do %response.SetHeader("Content-Type","application/javascript")   
+     q 1
+]]></Implementation>
+</Method>
+
+<Method name="OnPage">
+<ClassMethod>1</ClassMethod>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+    if $d(%request.Data("include")){
+         
+        s includeClassName=%request.Get("include","")
+        if $e(includeClassName,$l(includeClassName)-3,$l(includeClassName))=".cls"{
+            s includeClassName=$e(includeClassName,1,$l(includeClassName)-4)
+        }
+        d ..readJSFunctionFromCacheClass(includeClassName)
+        q $$$OK
+    }  
+    
+    
+    
+    #define cspEncode(%k,%d)      $translate($System.Encryption.AESBase64Encode(%d,%k),"+=/"_$char(32,13,10),"_-$") 
+    #define cspDecode(%k,%d)      $System.Encryption.AESBase64Decode($translate(%d,"_-$","+=/"),%k) 
+         ;   k ^SPOOL($job) 
+         ;   O 2:($job) 
+         ;   U 2:($job)
+         ;   ; zw head
+         ;   zw %request
+         ;   c 2:($job)  
+         ;   USE $ZUTIL(53):(::"M")
+     if %request.Get("cspIntRunMethod",0)=1 {
+        s WEVENT=%request.Get("WEVENT","")
+        s %method=$p(WEVENT,".",$l(WEVENT,"."))
+        s %class=$e(WEVENT,1,$l(WEVENT)-$l(%method)-1)
+        s WEVENT=$c(1)_WEVENT
+        s WEVENT= $$$cspEncode(%session.Key,"1"_WEVENT)
+        d %request.Set("WEVENT",WEVENT)
+        s %sc=""
+        s %isNewMethod=1
+        d ..ExecRunMethod()
+        Quit $$$OK
+     }
+     
+     if ##this="HTML.CacheLib"{
+       s ParentClassName="" 
+       s:$d(%request.CgiEnvs("HTTP_REFERER")) ParentClassName= $SYSTEM.CSP.GetClassName(%request.CgiEnvs("HTTP_REFERER"))
+       if ParentClassName'=""{    w "var ParentClassName="""_ParentClassName_".cls"";"    }
+       if $d(%request.CgiEnvs("Referer")),$d(%request.CgiEnvs("Host")){
+           s ref=$P(%request.CgiEnvs("Referer"),%request.CgiEnvs("Host"),2)
+           s ParentClassName=$SYSTEM.CSP.GetClassName(ref)
+           if ParentClassName'="" {    w "        var ParentClassName="""_ParentClassName_".cls"";"_$c(13,10)
+           }else{                      w "        var ParentClassName="""_ref_".cls"";"_$c(13,10)             }
+       }
+       w " var ThisClassName="""_$ZCVT(##this,"O","URL")_".cls""; " _$c(13,10)
+       d ..readJSFunctionFromCacheClass(##this)
+       
+        s ParentClassName1="HTML.CacheLib"
+        s MethodName="InitCacheLib"
+        for ind=1:1:^oddDEF(ParentClassName1,"m",MethodName,30) {
+                 w ^oddDEF(ParentClassName1,"m",MethodName,30,ind)_$c(13,10)
+        }
+       d ..readJSPrototypeFromCacheClass(##this)
+       d ..readJSPrototypeFromCacheClass(ParentClassName)
+       d ..readJSFunctionFromCacheClass(ParentClassName)
+       q $$$OK
+     }
+
+
+
+ // запуск
+    if $d(%request.Data("prototyp")){
+          s ProtopypeClassName=%request.Get("prototyp","")
+          d ..readJSPrototypeFromCacheClass(ProtopypeClassName)
+    }    
+    
+  
+   
+   s ParentClassName="" 
+   s ref=""
+   s:$d(%request.CgiEnvs("HTTP_REFERER")) ParentClassName= $SYSTEM.CSP.GetClassName(%request.CgiEnvs("HTTP_REFERER"))
+   if ParentClassName'=""{    w "var ParentClassName="""_ParentClassName_".cls"";"_$c(13,10)    }
+   if $d(%request.CgiEnvs("Referer")),$d(%request.CgiEnvs("Host")){
+       s ref=$P(%request.CgiEnvs("Referer"),%request.CgiEnvs("Host"),2)
+       s ParentClassName=$SYSTEM.CSP.GetClassName(ref)
+       if ParentClassName'="" {    w "        var ParentClassName="""_ParentClassName_".cls"";"_$c(13,10)
+       }else{                      w "        var ParentClassName="""_ref_".cls"";"_$c(13,10)             }
+   }
+   w " var ThisClassName="""_$ZCVT(##this,"O","URL")_".cls""; "_$c(13,10) 
+    
+   ///  Пробигаем по родителям и создаем функции от них 
+   if $d(^oddDEF(##this,60)) {
+        for i=1:1:$l(^oddDEF(##this,60),",") {
+          s SubClass=$p(^oddDEF(##this,60),",",i)
+          continue:SubClass="HTML.CacheLib" ; пропускаем основную бублиотеку
+          d ..readJSFunctionFromCacheClass(SubClass,,0)
+      }
+   }
+   d ..readJSPrototypeFromCacheClass(ParentClassName)
+   d ..readJSFunctionFromCacheClass(ParentClassName)
+   d ..readJSFunctionFromCacheClass(##this)
+   d ..readJSPrototypeFromCacheClass(##this)
+   Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="ExecRunMethod">
+<ClassMethod>1</ClassMethod>
+<Implementation><![CDATA[
+     Set newList="",setList=""
+     #; Get class and method name from event assume if WARGC is not present it is 0
+     Set count=$Get(%request.Data("WARGC",1),0)
+     if '$d(^oddDEF(%class,"m",%method,42)) {
+          Set code="Do ##class("_%class_")."_%method_"("
+     } Else {
+          Set code="w ##class("_%class_")."_%method_"("
+     }
+     #; get arguments for method; 'null' values become undefined
+     For i=1:1:count {
+          If i>1 Set code=code_","
+          Set arg="WARG_"_i
+          If $Data(%request.Data(arg,1)) {
+               Set code=code_"%request.Data("""_arg_""",1)"
+          } ElseIf $Data(%request.Data("WLIST"_i,1)) {
+               Set var="W"_i
+               Set code=code_"."_var
+               Set newList=newList_$select(newList="":"new ",1:",")_var
+               For j=1:1:%request.Data("WLIST"_i,1) {
+                    If $Data(%request.Data(var,j)) {
+                         Set setList=setList_" set "_var_"("_j_")=%request.Data("""_var_""","_j_") "
+                    }
+               }
+          }
+     }
+     Set code=newList_$select(newList="":"",1:" ")_setList_code_")"
+     x code
+]]></Implementation>
+</Method>
+
+<Method name="readJSFunctionFromCacheClass">
+<Description><![CDATA[
+<pre>
+
+Варианты параметров классов 
+ 1) [ Language = cache, WebMethod ]
+ 2) [ Language = javascript, WebMethod ]
+
+Пример классов , которые будут интерпритированы в JS функции:
+    ClassMethod test2() [ Language = cache, WebMethod ]{ zw }
+    ClientMethod test3() [ Language = javascript, WebMethod ]{    alert('test3()');}
+    Property cspXMLHttp As %String [ ServerOnly = 1 ];
+    Property cspUseGetMethod As %Boolean [ InitialExpression = 0, ServerOnly = 1 ];
+    Property cspMozilla As %Boolean [ InitialExpression = "nill", ServerOnly = 1 ];
+   
+</pre>]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>ParentClassName="",MethodName="",DrawDescript=1</FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+     s onEventFun=",onblur,onerror,onfocus,onload,onresize,onscroll,onbeforeunload,onhashchange,onlanguagechange,onmessage,onoffline,ononline,onpagehide,onpageshow,onpopstate,onrejectionhandled,onstorage,onunhandledrejection,onunload,onabort,oncancel,oncanplay,oncanplaythrough,onchange,onclick,onclose,oncontextmenu,oncuechange,ondblclick,ondrag,ondragend,ondragenter,ondragleave,ondragover,ondragstart,ondrop,ondurationchange,onemptied,onended,oninput,oninvalid,onkeydown,onkeypress,onkeyup,onloadeddata,onloadedmetadata,onloadstart,onmousedown,onmouseenter,onmouseleave,onmousemove,onmouseout,onmouseover,onmouseup,onmousewheel,onpause,onplay,onplaying,onprogress,onratechange,onreset,onseeked,onseeking,onselect,onshow,onstalled,onsubmit,onsuspend,ontimeupdate,ontoggle,onvolumechange,onwaiting,onauxclick,ongotpointercapture,onlostpointercapture,onpointercancel,onpointerdown,onpointerenter,onpointerleave,onpointermove,onpointerout,onpointerover,onpointerup,onbeforecopy,onbeforecut,onbeforepaste,oncopy,oncut,onpaste,onsearch,onselectstart,onwheel,onwebkitfullscreenchange,onwebkitfullscreenerror"
+     s ClassOref=##class(%ClassDefinition).%OpenId(ParentClassName)
+     if ClassOref {
+       s ConstructMethod=$p(ParentClassName,".",$l(ParentClassName,"."))
+       s count=ClassOref.Properties.Count() 
+       for i=1:1:count {
+            s nam=ClassOref.Properties.GetAt(i).Name
+            continue:'$d(^oddDEF(ParentClassName,"a",nam,57))
+            continue:^oddDEF(ParentClassName,"a",nam,57)'=1
+            w "  var "_ClassOref.Properties.GetAt(i).Name_" "
+            if $d(^oddDEF(ParentClassName,"a",nam,31)) {
+                 s val=^oddDEF(ParentClassName,"a",nam,31)
+                 if val="""null""" w "=null;"_$c(13,10)  continue
+                 s typ=""
+                 if $d(^oddDEF(ParentClassName,"a",nam,5)) {
+                    s typ=^oddDEF(ParentClassName,"a",nam,5)
+                    if $e(typ,1,1)="%",$l(typ,".")=1 {
+                       s typ=$REPLACE(typ,"%","%Library.")
+                    }
+                 }   
+                 if typ="" {
+                     if $l(typ ," ")=1 { w "="_$e(val,2,$l(val)-1)_";"_$c(13,10)  continue }
+                    try {   x "w "_val   }catch(e){  w "="_$e(val,2,$l(val)-1)_";"_$c(13,10)  continue }
+                 }
+                 
+                 if typ="%Library.Boolean" {
+                      if $e(val,1,1)="""" {
+                         w "=" 
+                         try {   x "w "_val   }catch(e){  if +val=1 { w "=true"  }else     { w "=false" }   }
+                      }else {
+                        if val=1 { w "=true"  }else     { w "=false" }
+                      }
+                 }elseif  typ="%Library.Integer" {
+                     if $e(val,1,1)="""" {
+                         w "=" 
+                         try {   x "w "_val   }catch(e){  s val=+val  w val }
+                      } else {
+                          s val=+val  w val
+                      } 
+                 }else{
+                     if $e(val,1,1)'="""" {
+                           w "=""" 
+                           try {   x "w "_val   }catch(e){  w val   }
+                           w """"
+                      } else {
+                         w "="_val
+                      } 
+                 }
+            }
+            w ";"_$c(13,10) 
+       }
+       s ConstructMethodIndex=""
+       s count=ClassOref.Methods.Count()
+       for i=1:1:count {
+            if (MethodName=""){
+               continue:$l(ClassOref.Methods.GetAt(i).Name,"OnPage")'=1
+               continue:ClassOref.Methods.GetAt(i).Name="OnPreHTTP"
+               continue:ClassOref.Methods.GetAt(i).Name="OnPostHTTP"
+               continue:ClassOref.Methods.GetAt(i).Name="getLibOne"
+               continue:ClassOref.Methods.GetAt(i).Name="GetJSMethodFromClientMethod"
+               continue:ClassOref.Methods.GetAt(i).Name="readJSFunctionFromCacheClass"
+            }else{
+                continue:ClassOref.Methods.GetAt(i).Name'=MethodName   
+            }
+           /// [ ServerOnly = 1 ]
+           // continue:'$d(^oddDEF(ParentClassName,"m",ClassOref.Methods.GetAt(i).Name,59))
+           // continue:^oddDEF(ParentClassName,"m",ClassOref.Methods.GetAt(i).Name,59)'=1
+           
+           /// [ WebMethod ]
+           continue:'$d(^oddDEF(ParentClassName,"m",ClassOref.Methods.GetAt(i).Name,51))
+           continue:^oddDEF(ParentClassName,"m",ClassOref.Methods.GetAt(i).Name,51)'=1
+          
+          if $ZCVT(ClassOref.Methods.GetAt(i).Name,"L")=$ZCVT(ConstructMethod,"L"){
+             s ConstructMethodIndex=i
+             continue    
+          }
+          
+          if DrawDescript=1 {
+             if $l(ClassOref.Methods.GetAt(i).Description)>0,ParentClassName'=##this{
+                w !,"/*",!
+                w $replace(ClassOref.Methods.GetAt(i).Description,"*/","-/-")
+                w !,"*/"
+             }
+          }
+          // Получаем JS представление Cache клиент метода
+           if ClassOref.Methods.GetAt(i).Language="javascript" {
+               w !,"var "_ClassOref.Methods.GetAt(i).Name_"=function("
+               s param=ClassOref.Methods.GetAt(i).FormalSpec
+               for ind=1:1:$l(param,","){
+                   s subParam=$p(param,",",ind)
+                   s subParam=$p(subParam,":",1)
+                   s subParam=$p(subParam,"=",1)
+                   w:ind'=1 ","
+                   w subParam
+               }
+               w "){",!
+                 d ..ExecFrag(ClassOref.Methods.GetAt(i).Code,"/*(",")*/")
+                 // w ClassOref.Methods.GetAt(i).Code
+               w !,"};"
+                
+            }
+           // Получаем JS представление Cache класс метода
+           if ClassOref.Methods.GetAt(i).Language="cache" {
+                   w !,"var "_ClassOref.Methods.GetAt(i).Name_"=function(){",!
+                  if $d(^oddDEF(ParentClassName,"m",ClassOref.Methods.GetAt(i).Name,42)){ w "return "}
+                   w " runMethod('"_ParentClassName_"."_ClassOref.Methods.GetAt(i).Name_"',arguments);"
+                   w !,"};"
+           }
+                
+         }
+         // После отрисовки функций, создаем конструктор( если конечно он встретился ранее)
+         if ConstructMethodIndex'="" {
+           s i=ConstructMethodIndex
+           if ClassOref.Methods.GetAt(i).Language="javascript" {
+              d ..ExecFrag(ClassOref.Methods.GetAt(i).Code,"/*(",")*/")
+           }
+           if ClassOref.Methods.GetAt(i).Language="cache" {
+              w " runMethod('"_ParentClassName_"."_ClassOref.Methods.GetAt(i).Name_"',arguments);"
+           }
+         }
+       }
+       q ""
+]]></Implementation>
+</Method>
+
+<Method name="readJSPrototypeFromCacheClass">
+<Description>
+Метод создания прототипа JS из Cache класса</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>ParentClassName=""</FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+      if $l(ParentClassName,":")=1 {
+         s NamePrototupe=""
+      }else{
+         s NamePrototupe=$p(ParentClassName,":",2)
+         s ParentClassName=$p(ParentClassName,":",1)
+     }
+     if ParentClassName = ""  s ParentClassName=##this
+     s onEventFun=",onblur,onerror,onfocus,onload,onresize,onscroll,onbeforeunload,onhashchange,onlanguagechange,onmessage,onoffline,ononline,onpagehide,onpageshow,onpopstate,onrejectionhandled,onstorage,onunhandledrejection,onunload,onabort,oncancel,oncanplay,oncanplaythrough,onchange,onclick,onclose,oncontextmenu,oncuechange,ondblclick,ondrag,ondragend,ondragenter,ondragleave,ondragover,ondragstart,ondrop,ondurationchange,onemptied,onended,oninput,oninvalid,onkeydown,onkeypress,onkeyup,onloadeddata,onloadedmetadata,onloadstart,onmousedown,onmouseenter,onmouseleave,onmousemove,onmouseout,onmouseover,onmouseup,onmousewheel,onpause,onplay,onplaying,onprogress,onratechange,onreset,onseeked,onseeking,onselect,onshow,onstalled,onsubmit,onsuspend,ontimeupdate,ontoggle,onvolumechange,onwaiting,onauxclick,ongotpointercapture,onlostpointercapture,onpointercancel,onpointerdown,onpointerenter,onpointerleave,onpointermove,onpointerout,onpointerover,onpointerup,onbeforecopy,onbeforecut,onbeforepaste,oncopy,oncut,onpaste,onsearch,onselectstart,onwheel,onwebkitfullscreenchange,onwebkitfullscreenerror"
+     if $d(^oddDEF(ParentClassName)) {
+      /// проверяем есть-ли объекты для добавления в JS прототипы  
+      /// если нет, тогда выходим из обработчика 
+       s isAddPrototype=0
+        s MethodName=""
+       for {
+          s MethodName=$o(^oddDEF(ParentClassName,"m",MethodName))
+          q:MethodName="" 
+          if $d(^oddDEF(ParentClassName,"m",MethodName,14)) {
+             s isAddPrototype=1
+          }
+       }
+       q:isAddPrototype=0 ""
+      ///------------------------------------------------------------------- 
+
+       /// Если в классе существует тэг "tagName" тогда обрабатывваем класс как HTML компонент
+       if $d(^oddDEF(ParentClassName,"p","tagName")){
+           s NamePrototupe=..readJSPrototypeHTMLComponentFromCacheClass(ParentClassName)
+           q NamePrototupe
+       }
+       /// -----------------------------------------------------------------------------------
+      
+          
+       /// Создаем протатипы родителей 
+        if $d(^oddDEF(ParentClassName,60)){
+             s SupperClassList=^oddDEF(ParentClassName,60)
+             k filtrSupperClass
+             for ind=1:1:$l(SupperClassList,","){
+                 s SupperClass=$p(SupperClassList,",",ind)
+                 continue:$l(SupperClass,"HTML.CacheLib")=2
+                 ; continue:$l(SupperClass,"%")=2
+                 if '$d(filtrSupperClass(SupperClass)) {
+                     s filtrSupperClass(SupperClass)=1 
+                    s SupperClassNamePrototype=..readJSPrototypeFromCacheClass(SupperClass)
+                    if $l(SupperClassNamePrototype)>0  s SupperClassNamePrototypeList(SupperClassNamePrototype)=SupperClass
+                 }
+             }
+        }
+       
+        
+       
+       
+        
+        /// Получаем список родительских классов
+        if NamePrototupe = "" {
+            if $d(^oddDEF(ParentClassName,"p","ClassName",22)){
+                 s NamePrototupe=^oddDEF(ParentClassName,"p","ClassName",22)
+            }else{
+                 s NamePrototupe=$p(ParentClassName,".",$l(ParentClassName,"."))
+            }
+        }
+
+        
+      ///------------------------------------------------------------------- 
+      /// Добавляем  описание класса 
+       ;  if $d(^oddDEF(ParentClassName,4)){
+       ;    w !,"/* Class:"_ParentClassName_" "
+       ;    s Description=^oddDEF(ParentClassName,4)
+       ;    s Description=$replace(Description,$c(13,10),$c(10))
+       ;    s Description=$replace(Description,"*/","-/")
+       ;    s Description=$replace(Description,"/*","/-")
+      ;    w !,Description,!
+       ;    w "*/"
+       ; }
+      ///------------------------------------------------------------------- 
+
+
+
+      ///------------------------------------------------------------------- 
+      /// Поиск конструктора(входящие аргументы)
+       s isFoundConstructor=0
+       s MethodName=""
+       for {
+          s MethodName=$o(^oddDEF(ParentClassName,"m",MethodName))
+          q:MethodName="" 
+         if NamePrototupe=MethodName {
+             if $d(^oddDEF(ParentClassName,"m",MethodName,70)) {
+                 w " var "_NamePrototupe_" = function("
+                 if $d(^oddDEF(ParentClassName,"m",MethodName,27)){    ; входные агргументы
+                     s Args=^oddDEF(ParentClassName,"m",MethodName,27)
+                     for ind=1:1:$l(Args,","){
+                        s arg=$p(Args,",",ind)
+                        s arg=$p(arg,":",1)
+                        s arg=$p(arg,"=",1)
+                        w:ind'=1 ","
+                        w arg
+                    }
+               }
+               w "){",!
+              }
+             s isFoundConstructor=1
+         }
+       }       
+        w:isFoundConstructor=0 !," var "_NamePrototupe_" = function() { "   
+       k isFoundConstructor
+      ///------------------------------------------------------------------- 
+
+
+
+       
+      ///------------------------------------------------------------------- 
+      /// Наследуем свойства суперклассов (прототипов)
+       s ind=""
+       for { 
+           s ind =$o(SupperClassNamePrototypeList(ind))
+           q:ind=""
+           w !,"     "_ind_".call(this);"
+       }
+       w !,"     var self=this; "   
+      ///------------------------------------------------------------------- 
+       
+       
+       
+      /// Если в параметре есть название "prototype" тогда указываем его как родителя
+       if $d(^oddDEF(ParentClassName,"p","prototype",22)){
+           w !,"     "_^oddDEF(ParentClassName,"p","prototype",22)_".call(this);"
+        }
+       ///---------------------------------------------------------------
+       
+       
+       
+      ///------------------------------------------------------------------- 
+      ///  Добавляем поля класса как JS переменные 
+        s PoleName=""
+       for {
+          s PoleName=$o(^oddDEF(ParentClassName,"a",PoleName))
+          q:PoleName=""  
+          continue:PoleName="prototype"
+          continue:'$d(^oddDEF(ParentClassName,"a",PoleName,14))
+          s value=""
+          if $d(^oddDEF(ParentClassName,"a",PoleName,31)){
+              s value=^oddDEF(ParentClassName,"a",PoleName,31)
+          }else{
+               k value
+           }
+           
+           ; ^oddDEF(ParentClassName,"a",PoleName,35)=1 ;  - private 
+           if $d(^oddDEF(ParentClassName,"a",PoleName,35)){
+             w !,"    var "_PoleName_""  
+           }else{  
+             w !,"     this."_PoleName_""     
+           }
+          if $d(value){ 
+              w "="_value_""
+          }else{
+             w "=null"
+          }
+          w ";"
+       }
+      ///------------------------------------------------------------------- 
+
+
+
+      ///------------------------------------------------------------------- 
+      /// добавляем методы класса
+       s MethodName=""
+       for {
+          s MethodName=$o(^oddDEF(ParentClassName,"m",MethodName))
+          q:MethodName="" 
+          continue:'$d(^oddDEF(ParentClassName,"m",MethodName,14)) ;  Internal
+          ; continue:'$d(^oddDEF(ParentClassName,"m",MethodName,32)) ;  Language = javascript
+          ; continue:'$d(^oddDEF(ParentClassName,"m",MethodName,70)) ;  ClientMethod
+         ; if ^oddDEF(ParentClassName,"m",MethodName,32)="javascript" {
+         if $d(^oddDEF(ParentClassName,"m",MethodName,70)) {              
+             if NamePrototupe'=MethodName {
+                    // private поле
+                   if $d(^oddDEF(ParentClassName,"m",MethodName,39)){
+                        w !,"     var "_MethodName_"=function("
+                     }else{  
+                      w !,"     this."_MethodName_"=function("
+                     }
+                   
+                   if $d(^oddDEF(ParentClassName,"m",MethodName,27)){    ; входные агргументы
+                        s Args=^oddDEF(ParentClassName,"m",MethodName,27)
+                        for ind=1:1:$l(Args,","){
+                           s arg=$p(Args,",",ind)
+                           s arg=$p(arg,":",1)
+                           s arg=$p(arg,"=",1)
+                           w:ind'=1 ","
+                           w arg
+                        }
+                   }
+                   w ")",!
+                   w "     {"
+            }                   
+                      if $d(^oddDEF(ParentClassName,"m",MethodName,30)){
+                           for ind=1:1:^oddDEF(ParentClassName,"m",MethodName,30){ 
+                             if $d(^oddDEF(ParentClassName,"m",MethodName,30,ind)){
+                                w !,^oddDEF(ParentClassName,"m",MethodName,30,ind)
+                             }
+                           }
+                      }
+             w:NamePrototupe'=MethodName !,"     }" 
+         }else{
+         ; if ^oddDEF(ParentClassName,"m",MethodName,32)="cache" {
+               if NamePrototupe'=MethodName {
+                          // private метод
+                         if $d(^oddDEF(ParentClassName,"m",MethodName,39)){
+                            w !,"     var "_MethodName_"=function(){",!
+                           }else{  
+                            w !,"     this."_MethodName_"=function(){",!
+                           }
+                         if $d(^oddDEF(ParentClassName,"m",MethodName,42)){     
+                            w "       return runMethod('"_ParentClassName_"."_MethodName_"',arguments);"
+                         }else{
+                            w "       runMethod('"_ParentClassName_"."_MethodName_"',arguments);"
+                         }
+                        w !,"     };"
+              }else{
+                 w "       runMethod('"_ParentClassName_"."_MethodName_"',arguments);"
+              }
+         }     
+         
+       }
+      ///------------------------------------------------------------------- 
+
+
+       w !," }"
+     }
+     q NamePrototupe
+]]></Implementation>
+</Method>
+
+<Method name="readJSPrototypeHTMLComponentFromCacheClass">
+<Description>
+Метод создания прототипа JS  HTML компотнента из Cache класса</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>ParentClassName=""</FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+      if $l(ParentClassName,":")=1 {
+         s NamePrototupe=""
+      }else{
+         s NamePrototupe=$p(ParentClassName,":",2)
+         s ParentClassName=$p(ParentClassName,":",1)
+     }
+      if ParentClassName = ""  s ParentClassName=##this
+      s onEventFun=",onblur,onerror,onfocus,onload,onresize,onscroll,onbeforeunload,onhashchange,onlanguagechange,onmessage,onoffline,ononline,onpagehide,onpageshow,onpopstate,onrejectionhandled,onstorage,onunhandledrejection,onunload,onabort,oncancel,oncanplay,oncanplaythrough,onchange,onclick,onclose,oncontextmenu,oncuechange,ondblclick,ondrag,ondragend,ondragenter,ondragleave,ondragover,ondragstart,ondrop,ondurationchange,onemptied,onended,oninput,oninvalid,onkeydown,onkeypress,onkeyup,onloadeddata,onloadedmetadata,onloadstart,onmousedown,onmouseenter,onmouseleave,onmousemove,onmouseout,onmouseover,onmouseup,onmousewheel,onpause,onplay,onplaying,onprogress,onratechange,onreset,onseeked,onseeking,onselect,onshow,onstalled,onsubmit,onsuspend,ontimeupdate,ontoggle,onvolumechange,onwaiting,onauxclick,ongotpointercapture,onlostpointercapture,onpointercancel,onpointerdown,onpointerenter,onpointerleave,onpointermove,onpointerout,onpointerover,onpointerup,onbeforecopy,onbeforecut,onbeforepaste,oncopy,oncut,onpaste,onsearch,onselectstart,onwheel,onwebkitfullscreenchange,onwebkitfullscreenerror"
+     // s ClassOref=##class(%ClassDefinition).%OpenId(ParentClassName)
+     // if ClassOref {
+     if $d(^oddDEF(ParentClassName)) {
+      
+      /// проверяем есть-ли объекты для добавления в JS прототипы  
+      /// если нет, тогда выходим из обработчика 
+       s isAddPrototype=0
+        s MethodName=""
+       for {
+          s MethodName=$o(^oddDEF(ParentClassName,"m",MethodName))
+          q:MethodName="" 
+          if $d(^oddDEF(ParentClassName,"m",MethodName,14)) {
+             s isAddPrototype=1
+          }
+       }
+       q:isAddPrototype=0 ""
+      ///------------------------------------------------------------------- 
+
+      
+          
+       /// Создаем протатипы родителей 
+        if $d(^oddDEF(ParentClassName,60)){
+             s SupperClassList=^oddDEF(ParentClassName,60)
+             for ind=1:1:$l(SupperClassList,","){
+                 s SupperClass=$p(SupperClassList,",",ind)
+                 continue:$l(SupperClass,"%")=2
+                 s SupperClassNamePrototype=..readJSPrototypeFromCacheClass(SupperClass)
+                 if $l(SupperClassNamePrototype)>0  s SupperClassNamePrototypeList(SupperClassNamePrototype)=SupperClass
+             }
+        }
+        /// Получаем список родительских классов
+        if NamePrototupe = "" {
+            if $d(^oddDEF(ParentClassName,"p","ClassName",22)){
+                 s NamePrototupe=^oddDEF(ParentClassName,"p","ClassName",22)
+            }else{
+                 s NamePrototupe=$p(ParentClassName,".",$l(ParentClassName,"."))
+            }
+        }
+      /// Если в параметре есть название "prototype" тогда указываем его как родителя
+      s ParamName=""
+      s isFoundsetTimeOut=1000
+      s isFoundParam=0
+      for {
+         s ParamName=$o(^oddDEF(ParentClassName,"p",ParamName))
+         q:ParamName="" 
+         if $d(^oddDEF(ParentClassName,"p","prototype",22)){
+              w !," var "_NamePrototupe_"=Object.create(HTML"_^oddDEF(ParentClassName,"p","prototype",22)_"Element.prototype); "    
+             s isFoundParam=1
+         }
+      }     
+      if isFoundParam=0 {
+          w "   var elementPrototype = typeof HTMLElement !== 'undefined' ? HTMLElement.prototype : Element.prototype; " _$c(13,10)
+           w " var "_NamePrototupe_"=Object.create(elementPrototype); " 
+      }
+       ///---------------------------------------------------------------
+      
+      /// поиск метода loop и параметра loopInterval
+      /// setInterval(this.tick.bind(this), 1000);
+       s TextLoopFunction=""
+       s MethodName=""
+       for {
+            s MethodName=$o(^oddDEF(ParentClassName,"m",MethodName))
+            q:MethodName="" 
+           if "setinterval"=$ZCVT(MethodName,"L") {
+             s ParamName=""
+             s isFoundsetTimeOut=1000
+             for {
+                 s ParamName=$o(^oddDEF(ParentClassName,"p",ParamName))
+                 q:ParamName="" 
+                 if $zcvt(ParamName,"L")="setinterval",$d(^oddDEF(ParentClassName,"p",ParamName,22)) {
+                       s isFoundsetTimeOut=^oddDEF(ParentClassName,"p",ParamName,22) 
+                       q 
+                 }
+             }
+             s TextLoopFunction=TextLoopFunction_$c(10)_"    setInterval("_NamePrototupe_"."_MethodName_".bind(this), "_isFoundsetTimeOut_"); "     
+           }
+           
+           if "settimeout"=$ZCVT(MethodName,"L") {
+              s TextLoopFunction=TextLoopFunction_$c(10)_"     setTimeout( "_NamePrototupe_"."_MethodName_".bind(this)"     
+             s ParamName=""
+             s isFoundsetTimeOut=1000
+             for {
+                 s ParamName=$o(^oddDEF(ParentClassName,"p",ParamName))
+                 q:ParamName="" 
+                 if $zcvt(ParamName,"L")="settimeout",$d(^oddDEF(ParentClassName,"p",ParamName,22)) {
+                       s isFoundsetTimeOut=^oddDEF(ParentClassName,"p",ParamName,22) 
+                       q 
+                 }
+             }
+             s TextLoopFunction=TextLoopFunction_$c(10)_" ,"_isFoundsetTimeOut_"); "     
+           }
+       }      
+      
+      ///------------------------------------------------------------------- 
+      /// Поиск конструктора
+       s isFoundConstructor=0
+       s MethodName=""
+       for {
+            s MethodName=$o(^oddDEF(ParentClassName,"m",MethodName))
+            q:MethodName="" 
+           if NamePrototupe=MethodName {
+              /// событие после прорисовки HTML элемента
+              w !,"  "_NamePrototupe_".attachedCallback = function() {"
+                  if $d(^oddDEF(ParentClassName,"m",MethodName,70)) {
+                      if $d(^oddDEF(ParentClassName,"m",MethodName,30)){
+                           for ind=1:1:^oddDEF(ParentClassName,"m",MethodName,30){ 
+                             if $d(^oddDEF(ParentClassName,"m",MethodName,30,ind)){
+                                d ..ExecFrag(^oddDEF(ParentClassName,"m",MethodName,30,ind),"/*(",")*/")
+                                // w !,^oddDEF(ParentClassName,"m",MethodName,30,ind)
+                             }
+                           }
+                          w TextLoopFunction
+                      }
+                  }else{
+                     w "       runMethod('"_ParentClassName_"."_MethodName_"',arguments);"
+                     w TextLoopFunction
+                  }
+              w !,"   };"
+           }
+       }
+      ///------------------------------------------------------------------- 
+  
+      // Конструктор
+      w !," "_NamePrototupe_".createdCallback = function() {"
+      ///------------------------------------------------------------------- 
+      /// Наследуем свойства суперклассов (прототипов)
+       s ind=""
+       for { 
+           s ind =$o(SupperClassNamePrototypeList(ind))
+           q:ind=""
+           w !,"     "_ind_".call(this);"
+       }
+       w !,"     var self=this; "   
+      ///------------------------------------------------------------------- 
+       
+       
+       
+       
+      ///------------------------------------------------------------------- 
+      ///  Добавляем поля класса как JS переменные 
+        s PoleName=""
+       for {
+          s PoleName=$o(^oddDEF(ParentClassName,"a",PoleName))
+          q:PoleName=""  
+          continue:PoleName="prototype"
+          continue:'$d(^oddDEF(ParentClassName,"a",PoleName,14))
+          s value=""
+          if $d(^oddDEF(ParentClassName,"a",PoleName,31)){
+              s value=^oddDEF(ParentClassName,"a",PoleName,31)
+          }else{
+               k value
+           }
+           ; ^oddDEF(ParentClassName,"a",PoleName,35)=1 ;  - private 
+           if $d(^oddDEF(ParentClassName,"a",PoleName,35)){
+             w !,"    var "_PoleName_""  
+           }else{  
+             w !,"    this."_PoleName_""      
+           }
+          if $d(value){ 
+             w "="_value_""
+          }else{
+             w "=null"
+          }
+          w ";"
+       }
+      ///------------------------------------------------------------------- 
+
+      w !," }"
+
+      ///------------------------------------------------------------------- 
+      /// добавляем методы класса
+       s MethodName=""
+       for {
+          s MethodName=$o(^oddDEF(ParentClassName,"m",MethodName))
+          q:MethodName="" 
+         continue:NamePrototupe=MethodName 
+          continue:'$d(^oddDEF(ParentClassName,"m",MethodName,14)) ;  Internal
+          ; continue:'$d(^oddDEF(ParentClassName,"m",MethodName,32)) ;  Language = javascript
+          ; continue:'$d(^oddDEF(ParentClassName,"m",MethodName,70)) ;  ClientMethod
+         ; if ^oddDEF(ParentClassName,"m",MethodName,32)="javascript" {
+        
+         if $d(^oddDEF(ParentClassName,"m",MethodName,70)) {              
+                    // private поле
+                   w !,"     "_NamePrototupe_"."_MethodName_"=function("
+                   if $d(^oddDEF(ParentClassName,"m",MethodName,27)){    ; входные агргументы
+                        s Args=^oddDEF(ParentClassName,"m",MethodName,27)
+                        for ind=1:1:$l(Args,","){
+                           s arg=$p(Args,",",ind)
+                           s arg=$p(arg,":",1)
+                           s arg=$p(arg,"=",1)
+                           w:ind'=1 ","
+                           w arg
+                        }
+                   }
+                   w ")",!
+                   w "     {"
+                      if $d(^oddDEF(ParentClassName,"m",MethodName,30)){
+                           for ind=1:1:^oddDEF(ParentClassName,"m",MethodName,30){ 
+                             if $d(^oddDEF(ParentClassName,"m",MethodName,30,ind)){
+                                // w !,^oddDEF(ParentClassName,"m",MethodName,30,ind)
+                                d ..ExecFrag(^oddDEF(ParentClassName,"m",MethodName,30,ind),"/*(",")*/")
+                             }
+                           }
+                      }
+             w !,"    }" 
+         }else{
+         ; if ^oddDEF(ParentClassName,"m",MethodName,32)="cache" {
+               w !,"     "_NamePrototupe_"."_MethodName_"=function(){",!
+               if $d(^oddDEF(ParentClassName,"m",MethodName,42)){     
+                  w "       return runMethod('"_ParentClassName_"."_MethodName_"',arguments);"
+               }else{
+                  w "       runMethod('"_ParentClassName_"."_MethodName_"',arguments);"
+               }
+               w !,"     };"
+         }     
+       }
+      ///------------------------------------------------------------------- 
+      if $d(^oddDEF(ParentClassName,"p","tagName")){
+          w !," document.registerElement('"
+          if $d(^oddDEF(ParentClassName,"p","tagName",22)){
+              if $l(^oddDEF(ParentClassName,"p","tagName",22))>0{ 
+              w ^oddDEF(ParentClassName,"p","tagName",22)
+              }else{
+              w NamePrototupe 
+              }
+          }else{
+              w NamePrototupe 
+          }
+          w "', { "
+         w !,"    prototype: "_NamePrototupe
+         w !," });"
+       }       
+    }
+  q NamePrototupe
+]]></Implementation>
+</Method>
+
+<UDLText name="T">
+<Content><![CDATA[
+/*
+     CSPBroker.js
+     Copyright (c) 2000 InterSystems Corp. ALL RIGHTS RESERVED.
+*/
+]]></Content>
+</UDLText>
+
+<Method name="cspInsertCode">
+<FormalSpec>object,event,code</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+     // create a new handler function
+     // if there was an old one, invoke it from the new one.
+
+     if (object['old' + event] != null) {
+          // handler already added
+          return;
+     }
+
+     var old = '';
+
+     if (object[event] != null) {
+          object['old' + event] = object[event];
+          old = 'return old' + event + '();'
+     }
+
+     object[event] = new Function(code + old);
+]]></Implementation>
+</Method>
+
+<Method name="cspUnloadPopup">
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+     if (self.cspPopupWindow != null) {
+          self.cspPopupWindow.close();
+     }
+
+     return true;
+]]></Implementation>
+</Method>
+
+<Method name="cspGetSearchValues">
+<FormalSpec>form</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+     var query = '';
+     for (var i = 1; i < arguments.length; i++) {
+          query = query + ((i > 1) ? '&' : '') + 'PARM=';
+          if (form[arguments[i]] != null) {
+               query = query + cspEncodeUTF8(form[arguments[i]].value);
+          }
+     }
+     return query;
+]]></Implementation>
+</Method>
+
+<Method name="cspFindCookie">
+<FormalSpec>name</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+     var one;
+     var all = document.cookie.split('; ');
+     for (var i = 0; i < all.length; i++) {
+          one = all[i].split('=');
+          if (name == one[0]) {
+               return unescape(one[1]);
+          }
+     }
+     return null;
+]]></Implementation>
+</Method>
+
+<Method name="cspOpenSession">
+<FormalSpec>target,url,name,features,replace</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+     var win = null;
+     var cookie = cspFindCookie('CSPSESSIONID');
+
+     // get rid of session cookie to force new window to have a new session
+     self.document.cookie = 'CSPSESSIONID=' + escape('garbage') + '; expires=Fri, 02-Jan-1970 00:00:00 GMT';
+
+     if (cspOpenSession.arguments.length == 2) {
+          win = target.open(url);
+     }
+     else if (cspOpenSession.arguments.length == 3) {
+          win = target.open(url,name);
+     }
+     else if (cspOpenSession.arguments.length == 4) {
+          win = target.open(url,name,features);
+     }
+     else if (cspOpenSession.arguments.length == 5) {
+          win = target.open(url,name,features,replace);
+     }
+     // restore value of cookie
+     self.document.cookie = 'CSPSESSIONID=' + escape(cookie);
+     return win;
+]]></Implementation>
+</Method>
+
+<Method name="cspMakeBoolean">
+<Description>
+Convert JavaScript boolean value to Cache %Boolean (1 or 0)
+in order for #server and #call %Boolean arguments to have a consistent value.</Description>
+<FormalSpec>boolarg</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+     // Comment "return boolarg ? 1 : 0;" and uncomment "return boolarg;"
+     //   to return to previous functionality for compatibility.
+
+     // The next line converts true/false to 1/0
+     return boolarg ? 1 : 0;
+
+     // The next line does no conversion and is the previous default -- initially commented.
+     //return boolarg
+]]></Implementation>
+</Method>
+
+<Method name="cspIsFieldEmpty">
+<Description>
+utilities used by bound forms
+test if the specified field within a form is empty</Description>
+<FormalSpec>form,field</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+     var element=self.document[form][field];
+     var val;
+     if ((element.type == 'select-one') || (element.type == 'select-multiple')) {
+          val = cspGetSelectList(element);
+          return (val.length == 0)
+     }
+     val = element.value;
+     if ((val == null) || (val == '')) {
+          return true;
+     }
+     // strip white space and test
+     for (var i=0; val.length > i; i++) {
+          var c = val.charAt(i);
+          if ((c != ' ') && (c != '\n') && (c != '\t')) {
+               return false;
+          }
+     }
+     return true;
+]]></Implementation>
+</Method>
+
+<Method name="cspTrim">
+<Description>
+trim the trailing spaces from a string</Description>
+<FormalSpec>string</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+     for (var i = string.length - 1; i >= 0; i--) {
+          if (string.charAt(i) != ' ') {
+               return string.substr(0, i + 1);
+          }
+     }
+
+     return '';
+]]></Implementation>
+</Method>
+
+<Method name="cspString">
+<Description>
+trim the trailing spaces from a string</Description>
+<FormalSpec>string</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[     return (string.length > 0) ? string : '';
+]]></Implementation>
+</Method>
+
+<Method name="cspNormalizeString">
+<Description>
+Normalize the line ending characters within a string so that
+they are always \r\n.</Description>
+<FormalSpec>string</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[     return (string.length > 0) ? string.replace(/\r\n|\n/g,"\r\n") : '';
+]]></Implementation>
+</Method>
+
+<Method name="cspGetSelectValue">
+<Description>
+return the current value of select control 'select'</Description>
+<FormalSpec>select</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+     var opt;
+     var values;
+
+     if (select == null) {
+          return null;
+     }
+
+     if (select.type == 'select-one') {
+          values = (select.selectedIndex < 0) ? '' : select.options[select.selectedIndex].value;
+     } else if (select.type == 'select-multiple') {
+          for (var i=0; i < select.options.length; i++) {
+               opt = select.options[i];
+               if (opt.selected) {
+                    values = opt.value;
+               }
+          }
+     }
+
+     return values;
+]]></Implementation>
+</Method>
+
+<Method name="cspGetSelectList">
+<Description>
+return the current list of selected values of select control 'select'</Description>
+<FormalSpec>select</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+     var opt;
+     var index;
+     var values = new Array();
+
+     if (select == null) {
+          return null;
+     }
+
+     if (select.type == 'select-one') {
+          if (select.selectedIndex >= 0) {
+               values[0] = select.options[select.selectedIndex].value;
+          }
+     } else if (select.type == 'select-multiple') {
+          index = 0;
+          for (var i=0; i < select.options.length; i++) {
+               opt = select.options[i];
+               if (opt.selected) {
+                    values[index] = opt.value;
+                    index = index + 1;
+               }
+          }
+     }
+
+     return values;
+]]></Implementation>
+</Method>
+
+<Method name="cspSetSelectValue">
+<Description>
+set the selected value of select control 'select'</Description>
+<FormalSpec>select,val</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+     var selected = false;
+
+     if (select == null) {
+          return;
+     }
+
+     for (var i = 0; select.options.length > i; i++) {
+          if (select.options[i].value == val) {
+               select.selectedIndex = i;
+               selected = true;
+          }
+     }
+
+     if (!selected) {
+          select.selectedIndex = -1;
+     }
+]]></Implementation>
+</Method>
+
+<Method name="cspSetSelectList">
+<Description>
+set the list of selected values of multiple select control 'select'</Description>
+<FormalSpec>select,valList</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+     if (select == null) {
+          return;
+     }
+
+     select.selectedIndex = -1;  // clear all
+     for (var i = 0; i < select.options.length; i++) {
+          for (var j = 0; j < valList.length; j++) {
+               if (select.options[i].value == valList[j]) {
+                    select.options[i].selected = true;
+                    break;
+               }
+          }
+     }
+]]></Implementation>
+</Method>
+
+<Method name="cspGetRadioValue">
+<Description>
+return the current value of radio control 'radio'</Description>
+<FormalSpec>radio</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+     if (radio == null) {
+          return null;
+     }
+
+     for (var i = 0; radio.length > i; i++) {
+          if (radio[i].checked == 1) {
+               return radio[i].value;
+          }
+     }
+
+     return '';
+]]></Implementation>
+</Method>
+
+<Method name="cspGetCheckList">
+<Description>
+return the current list of checked values of multiple checkbox</Description>
+<FormalSpec>checks</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+     var index;
+     var values = new Array();
+
+     if (checks == null) {
+          return null;
+     }
+
+     index = 0;
+     for (var i = 0; i < checks.length; i++) {
+          if (checks[i].checked) {
+               values[index] = checks[i].value;
+               index = index + 1;
+          }
+     }
+
+     return values;
+]]></Implementation>
+</Method>
+
+<Method name="cspEscape">
+<Description>
+Escape the '+' character as well as those escaped by Javascript escape.
+This matches up unescaping that is done by CSP.</Description>
+<FormalSpec>str</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[     return escape(str).replace('+','%2B');
+]]></Implementation>
+</Method>
+
+<Property name="cspHexChars">
+<Type>%String</Type>
+<InitialExpression>"0123456789ABCDEF"</InitialExpression>
+<ServerOnly>1</ServerOnly>
+</Property>
+
+<Method name="cspEncodeChar">
+<FormalSpec>ch</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[     return '%' + cspHexChars.charAt(ch >> 4) + cspHexChars.charAt(ch & 0x0F);
+]]></Implementation>
+</Method>
+
+<Method name="cspEncodeUTF8">
+<FormalSpec>s</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+     if (s==null || s.length==0) {
+          return "";
+    }
+
+     if (typeof encodeURIComponent == "function") {
+          return encodeURIComponent(s);
+     }
+
+     var sbuf = '';
+     var len;
+     var i;
+     var ch;
+
+     s=s+""
+     len = s.length;
+
+     for (i = 0; i < len; i++) {
+          ch = s.charCodeAt(i);
+          if ( (65 <= ch && ch <= 90) ||          // 'A'..'Z'
+               (97 <= ch && ch <= 122) ||         // 'a'..'z'
+               (46 <= ch && ch <= 57) ) {         // '.', '/', '0'..'9'
+               sbuf += s.charAt(i);
+          } else if (ch == 32) {                   // space
+               sbuf += '+';
+          }
+
+          else if (ch <= 0x007f) {                // other ASCII
+               sbuf += cspEncodeChar(ch);
+          } else if (ch <= 0x07FF) {                // non-ASCII <= 0x7FF
+               sbuf += cspEncodeChar(0xc0 | (ch >> 6));
+               sbuf += cspEncodeChar(0x80 | (ch & 0x3F));
+          } else {                                  // 0x7FF < ch <= 0xFFFF
+               sbuf += cspEncodeChar(0xe0 | (ch >> 12));
+               sbuf += cspEncodeChar(0x80 | ((ch >> 6) & 0x3F));
+               sbuf += cspEncodeChar(0x80 | (ch & 0x3F));
+          }
+     }
+     return sbuf;
+]]></Implementation>
+</Method>
+
+<Method name="runMethod">
+<Description>
+Запуск Классметода асинхронном </Description>
+<FormalSpec>MethodName</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+    var fun=null;
+    var arr=new Array();
+    if ((''+runMethod.arguments[1])=='[object Arguments]'){
+      arr.push(runMethod.arguments[0]);     
+      for(var ind in runMethod.arguments[1]){if (runMethod.arguments[1][ind]==undefined){continue;} arr.push(runMethod.arguments[1][ind]); }   
+    }else{
+      for(var ind in runMethod.arguments){if (runMethod.arguments[ind]==undefined){continue;} arr.push(runMethod.arguments[ind]); }   
+    }
+    if (arr.length>1){
+       if (typeof arr[1] === 'function'){
+         fun=arr[1];
+         arr.splice(1, 1);
+       }
+    }
+    //        alert(JSON.stringify(arr) );
+    if (fun==null){
+        return cspIntRunMethod(MethodName,arr,false);
+    }else{
+        return cspIntRunMethod(MethodName,arr,true,fun);    
+    }
+]]></Implementation>
+</Method>
+
+<Property name="ResulFromSrv">
+<Type>%String</Type>
+<ServerOnly>1</ServerOnly>
+</Property>
+
+<Method name="cspIntRunMethod">
+<FormalSpec>method,args,async,CallBackFun</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+     var arg;
+     var i;
+     var url = "HTML.CacheLib.cls/?cspIntRunMethod=1";
+     var n;
+     var req;
+     var data = "WARGC=" + (args.length - 1) + "&WEVENT=" + method.replace(/&amp;/,'&');
+     for (i = 1; i < args.length; i++) {
+          arg = args[i];
+          if (typeof arg != "object") {
+               // Convert boolean to Cache value before sending
+               if (typeof arg == "boolean") arg = (arg ? 1 : 0);
+               data = data + "&WARG_" + i + "=" + encodeURIComponent(arg);
+          } else if (arg != null) {
+               n = 0;
+               for (var el in arg) {
+                    if (typeof arg[el] != "function") {
+                         data = data + "&W" + i + "=" + encodeURIComponent(arg[el]);
+                         n = n + 1;
+                    }
+               }
+               data = data + "&WLIST" + i + "=" + n;
+          }
+     }
+     // alert(data);
+     // data = data + "&cspIntRunMethod=1";
+        ResulFromSrv=null;
+        if (CallBackFun!=null){
+            req = new XMLHttpRequest();
+            req.open("POST", url, async);
+               req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            req.onreadystatechange = function() {
+              if (this.readyState == 4 && this.status == 200) {
+                 if (typeof CallBackFun === 'function'){
+                     CallBackFun(this.responseText);
+                 }
+                 req=null;
+              };
+           };
+           req.send(data);
+        }else{
+            var request = new XMLHttpRequest();
+            request.open('POST', url, async);
+            request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            request.send(data);
+            if (request.status === 200) {
+                ResulFromSrv=request.responseText;
+                // console.log(ResulFromSrv);
+           }
+           req=null;
+        }
+   return ResulFromSrv;
+]]></Implementation>
+</Method>
+
+<Method name="prototyp">
+<Description>
+Подключение JS прототипа из файла из класса</Description>
+<FormalSpec>PrototypeClass</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+    if (PrototypeClass==undefined){PrototypeClass=ParentClassName;}
+    if (PrototypeClass==null){PrototypeClass=ParentClassName;}
+      var ss = document.createElementNS("http://www.w3.org/1999/xhtml",'script');
+          ss.language = 'javascript';
+      var scr = runMethod('%ZHTML.CacheLib.readJSFunctionFromCacheClass',PrototypeClass);
+          scr +=runMethod('%ZHTML.CacheLib.readJSPrototypeFromCacheClass',PrototypeClass);
+          ss.text=scr;
+          document.getElementsByTagName('head')[0].appendChild(ss);
+]]></Implementation>
+</Method>
+
+<Method name="includeClass">
+<Description>
+Подключение JS библиотеки из класса</Description>
+<FormalSpec>ClassName,language,onloadFun</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+     if ((language==undefined)||(language==null)||(language.toLowerCase()=='javascript')||(language.toLowerCase()=='js')){
+        var ss = document.createElement('script');
+            ss.language = 'javascript';
+            ss.type = 'text\/javascript';
+        var scr = runMethod('HTML.CacheLib.readJSFunctionFromCacheClass',ClassName);
+            scr +=runMethod('HTML.CacheLib.readJSPrototypeFromCacheClass',ClassName);
+        var tt = document.createTextNode(scr);
+        ss.appendChild(tt);
+        document.head.appendChild(ss);
+     }else{
+         var ss = document.createElement('style');
+         var scr = runMethod('HTML.CacheLib.readJSFunctionFromCacheClass',ClassName);
+         var tt = document.createTextNode(scr);
+        ss.appendChild(tt);
+        document.head.appendChild(ss);
+     }
+]]></Implementation>
+</Method>
+
+<Method name="includeFile">
+<Description>
+Подключение Файла библиотеки</Description>
+<FormalSpec>FileName,language</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+     if ((language==undefined)||(language==null)||(language.toLowerCase()=='javascript')){
+        var jncLib = 4;
+        jncLib.language="JavaScript";
+        jncLib.src = FileName;
+        document.head.appendChild(jncLib);   
+     }else{
+       var BootStrapJSLib = document.createElement('link');
+       BootStrapJSLib.rel='stylesheet';
+       BootStrapJSLib.href = FileName;
+       document.head.appendChild(BootStrapJSLib); 
+     }
+]]></Implementation>
+</Method>
+
+<Method name="setCookie">
+<Description>
+Создать значние из Cookie  </Description>
+<FormalSpec>cname,cvalue,exdays</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+             
+  var d = new Date();       
+  d.setTime(d.getTime() + (exdays));       
+  var expires = 'expires=' + d.toUTCString();       
+  document.cookie = cname + '=' + cvalue + '; ' + expires;
+]]></Implementation>
+</Method>
+
+<Method name="delCookie">
+<Description>
+Удалить значние из Cookie  </Description>
+<FormalSpec>name</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[  setCookie(name, '', {expires: -1})
+]]></Implementation>
+</Method>
+
+<Method name="getCookie">
+<Description>
+Полцчить значние из Cookie  </Description>
+<FormalSpec>cname</FormalSpec>
+<Language>javascript</Language>
+<ReturnType>%String</ReturnType>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+   var name = cname + '=';       
+   var ca = document.cookie.split(';');       
+   for (var i = 0; i != ca.length+1; i++) {       
+        var c = ca[i];       
+        while (c.charAt(0) == ' ')       
+             c = c.substring(1);       
+        if (c.indexOf(name) == 0)       
+            return c.substring(name.length, c.length);       
+        }       
+        return '';
+]]></Implementation>
+</Method>
+
+<Method name="JsonBuild">
+<Description><![CDATA[
+<br> <font color="#000000">Поместить JSON объект в HTML элементы</font><br>
+<br>   &lt;input class="dat" ID='Param1'&gt;
+<br>   &lt;input class="dat" id='Param2'&gt;
+<br>   &lt;input class="dat" id='Param3'&gt;
+<br>   &lt;script language="javascript"&gt;
+<br>       jsonObj={'Param1':111,'Param2':'000','Param3':999};
+<br>       JsonBuild(jsonObj,'dat'); // поместить JSON в HTML элементы
+<br>   &lt;/script&gt;
+<br> ]]></Description>
+<FormalSpec>JsonObject,ClassName,IdName,ParamName</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+      var JsonObjectStr=JSON.stringify(JsonObject)
+      if ((''+IdName)=='undefined'){IdName='id';}
+      var elements= document.querySelectorAll('.'+ClassName);
+         for (var ind  in elements) {
+              if ((''+parseInt(''+ind))=='NaN'){continue; }     
+              var id=elements[ind].getAttribute(IdName);
+              if ((''+id)=='undefined'){continue; }
+              if ((''+ParamName)!='undefined'){ 
+                  if (ParamName!= elements[ind].getAttribute(IdName)){ continue; }   
+              }
+              
+              if (JsonObjectStr.indexOf('"'+id+'":')!=-1){
+                 val=elements[ind].value;
+                 if ((''+val)=='undefined'){
+                   NewVal=decodeURI(JsonObject[id]);
+                   OldVal=elements[ind].innerHTML;
+                   if (NewVal!=OldVal){
+                       elements[ind].innerHTML=NewVal; 
+                   }
+                    if (typeof JsonBuildWatch == "undefined"){ JsonBuildWatch=function(){ }}
+                    elements[ind].removeEventListener("change", JsonBuildWatch, false);
+                    elements[ind].addEventListener("change", function JsonBuildWatch() {
+                       ParamNamFromId=this.getAttribute(IdName);
+                       JsonObject[ParamNamFromId]=encodeURI(this.innerHTML)
+                       JsonBuild(JsonObject,ClassName); // Запускаем перерисовку всего объекта
+                    });
+                 }else{
+                     NewVal=decodeURI(JsonObject[id]);
+                    OldVal=elements[ind].value;
+                    if (NewVal!=OldVal){
+                       elements[ind].value=NewVal;
+                    }
+                    
+                    if (typeof JsonBuildWatch == "undefined"){ JsonBuildWatch=function(){ }}
+                    elements[ind].removeEventListener("change", JsonBuildWatch, false);
+                    elements[ind].addEventListener("change", function JsonBuildWatch() {
+                       // SubParList.SubPar
+                       ParamNamFromId=this.getAttribute(IdName);
+                       JsonObject[ParamNamFromId]=encodeURI(this.value)
+                       JsonBuild(JsonObject,ClassName); // Запускаем перерисовку всего объекта
+                    });
+                 }
+              }
+         }
+]]></Implementation>
+</Method>
+
+<Method name="JsonBuildWatch">
+<Description><![CDATA[
+<font color="#000000">
+ <br>  Поместить JSON объект в HTML элементы, если Объект изменится, тогда дерево элементов перестроится снова
+ <br>  Обновление происходит 1 раз в секунду.     
+</font><br>
+<pre>
+<example>
+Class Demo.CacheLibTest001 Extends %CSP.Page
+{
+ ClassMethod OnPage() As %Status
+ {
+  &html<
+  <script src='HTML.CacheLib.cls' type='text/javascript' ></script>
+  <input class="dat" ID='Param1'> 
+  <input class="dat" id='Param2'>
+  <input class="dat" id='Param3'>
+  <div class="dat" id='Param3'>111</div>
+  <script language="javascript">
+      var jsonObj={'Param1':111,'Param2':'000','Param3':999}; 
+      // JsonBuild(jsonObj,'dat');   /*  поместить JSON в HTML элементы, без отслеживания изменения объекта */
+      JsonBuildWatch(jsonObj,'dat'); /*  поместить JSON в HTML элементы, С отслеживанием изменения объекта  */
+      var timerId = setTimeout(function tick() {
+          jsonObj.Param3++; // Изменяем JSON объект
+          timerId = setTimeout(tick, 1);
+      }, 1);
+    </script>
+  >
+  Quit $$$OK
+  }
+
+}
+</example>
+</pre>]]></Description>
+<FormalSpec>JsonObject,ClassName,IdName</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+        JsonBuild(JsonObject,ClassName,IdName);
+         OldVal="";
+        NewVal=JSON.stringify(JsonObject);;
+        var tick = function tick(OldVal,NewVal,JsonObject,ClassName) {
+               if (OldVal==""){OldVal=NewVal;}
+                NewVal=JSON.stringify(JsonObject);
+                if (OldVal==""){OldVal=NewVal;}
+                if (OldVal!=NewVal){
+                    JsonBuild(JsonObject,ClassName);  
+                  // alert(NewVal);
+                    clearTimeout(tick);
+                }
+           timerId = setTimeout(tick, 1000,OldVal,NewVal,JsonObject,ClassName);
+        }
+        var timerId = setTimeout(tick, 1000,OldVal,NewVal,JsonObject,ClassName);
+]]></Implementation>
+</Method>
+
+<Method name="ReadFile">
+<Description><![CDATA[
+<pre>
+Вычитать файл в Base64
+Пример:
+</pre>
+<basefont name="Courier New"><pre style="background-color: rgb(255, 255, 255);"><font color="#000000">&lt;</font><font color="#ff0000">input&nbsp;</font><font color="#000080">type</font><font color="#000000">=</font><font color="#800080">'file'&nbsp;</font><font color="#000080">onchange</font><font color="#000000">=</font><font color="#800080">'ReadFile(ReturnCallbackFunction,this)'</font><font color="#000000">&gt; </font><br><font color="#000000">&lt;</font><font color="#ff0000">script&nbsp;</font><font color="#000080">language</font><font color="#000000">=</font><font color="#800080">"JavaScript"</font><font color="#000000">&gt;        </font><br><font color="#000000">ReturnCallbackFunction</font><font color="#000080">=</font><font color="#008080">function</font><font color="#000000">(txt){</font><br>&nbsp;&nbsp;&nbsp;&nbsp;<font color="#000000">document.write(txt);</font><br><font color="#000000">}</font><br><font color="#000000">&lt;/</font><font color="#ff0000">script</font><font color="#000000">&gt;</font><br></pre>
+
+CallBackFun - Функция для обработки результата
+        evt - HTML элемент document.getElementById('files')]]></Description>
+<FormalSpec>CallBackFun,evt</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+    // var files = evt.target.files; // FileList object
+    // var files = document.getElementById('files').files;
+    var reader;
+    var ProcedureBarInfo;
+    
+    function arrayBufferToBase64(ab){
+       var dView = new Uint8Array(ab);   //Get a byte view        
+       var arr = Array.prototype.slice.call(dView); //Create a normal array        
+       var arr1 = arr.map(function(item){        
+          return String.fromCharCode(item);    //Convert
+       });
+       return window.btoa(arr1.join(''));   //Form a string
+    }
+    
+    function errorHandler(evt) {
+    switch(evt.target.error.code) {
+      case evt.target.error.NOT_FOUND_ERR:
+        // alert('File Not Found!');
+        break;
+      case evt.target.error.NOT_READABLE_ERR:
+        alert('Файл не читаем!');
+        break;
+      case evt.target.error.ABORT_ERR:
+        break; // noop
+      default:
+        alert('An error occurred reading this file.');
+    };
+  }
+  function updateProgress(evt) {
+    // evt is an ProgressEvent.
+    if (evt.lengthComputable) {
+      var percentLoaded = Math.round((evt.loaded / evt.total) * 100);
+      ProcedureBarInfo.innerHTML ='<h1>Загрузка файла...('+percentLoaded+'%)</h1><br />'+f.type+'<br />'+f.size+'<br />'+f.lastModifiedDate.toLocaleDateString();
+      if (percentLoaded==100) { document.body.removeChild(ProcedureBarInfo) ; }
+    }
+  }
+  
+    var files = evt.files
+    var output = [];
+    var f;
+    var CountFile=files.length;
+    // document.getElementById('info').innerHTML='';
+    for (var i = 0, f; f = files[i]; i++) {
+          // escape(f.name)
+          // f.type
+          // f.size,
+          // f.lastModifiedDate.toLocaleDateString()
+          reader = new FileReader();
+          reader.onerror = errorHandler;
+          reader.onprogress = updateProgress;
+          reader.onabort = function(e) {  
+               alert('Загрузка файла прервана пользователем.');   
+               document.body.removeChild(ProcedureBarInfo);
+          };
+          reader.onloadstart = function(e){ 
+               // document.getElementById('progress_bar').className = 'loading'; 
+                  ProcedureBarInfo=document.createElement('div'); 
+                  ProcedureBarInfo.Id='progress_bar'; 
+                  ProcedureBarInfo.innerHTML ='<h1>Загрузка файла...</h1><button onclick="reader.abort();">Cancel read</button>';
+                  ProcedureBarInfo.style.left='0';
+                  ProcedureBarInfo.style.top='0'; 
+                  ProcedureBarInfo.style['font-size']='30px';
+                  ProcedureBarInfo.style.cursor='pointer';
+                  ProcedureBarInfo.style['text-align']='center'; 
+                  ProcedureBarInfo.style.width='100%'; 
+                  ProcedureBarInfo.style.height='100%'; 
+                  ProcedureBarInfo.style.position='fixed'; 
+                  ProcedureBarInfo.style.background='gray'; 
+                  ProcedureBarInfo.onclick = function(){   reader.abort();   }; 
+                  document.body.appendChild(ProcedureBarInfo); 
+            };
+          reader.onload = (function(theFile) {
+              return function(e) {
+                    // CallBackFun(arrayBufferToBase64(e.target.result));
+                   CallBackFun(e.target.result);
+                   document.body.removeChild(ProcedureBarInfo);
+                   // ProcedureBarInfo.innerHTML="";
+                   // ProcedureBarInfo.remove();
+                   return true;
+                };
+          })(f);
+       //   reader.readAsArrayBuffer(f);
+       //   reader.readAsArrayBuffer(f);
+            reader.readAsDataURL(f);
+       //   reader.readAsBinaryString(f);
+    }
+]]></Implementation>
+</Method>
+
+<Method name="WriteSqlJson">
+<Description><![CDATA[
+<pre>
+Вывести JSON массив данных из SQL запроса (без аргументов SQL)
+ d ##class(HTML.CacheLib).WriteSqlJson("SELECT * FROM User.test")
+</pre>]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>SqlStr:%String=""</FormalSpec>
+<Implementation><![CDATA[
+      if $l(SqlStr)=0 w "[]" q
+      s SqlStrTmp=$ZCVT(SqlStr,"L")
+      q:$l(SqlStrTmp,"insert")>1 "[]"
+      q:$l(SqlStrTmp,"update")>1 "[]"
+      q:$l(SqlStrTmp,"delete")>1 "[]"
+      q:$l(SqlStrTmp,"create ")>1 "[]"
+      q:$l(SqlStrTmp,"alter ")>1 "[]"
+      q:$l(SqlStrTmp,"drop ")>1 "[]"
+      q:$l(SqlStrTmp,"call ")>1 "[]"
+      s $ztrap="ztError"
+      s SQLobj=##class(%SQL.Statement).%New()
+      d SQLobj.%Prepare(SqlStrTmp)
+      s DataSet=SQLobj.%Execute()
+      s QMeta=DataSet.%GetMetaData()
+      s jsonTab = ##class(%Library.ListOfDataTypes).%New()
+      s countRaw=0
+      w "["
+      while DataSet.%Next()
+      {
+        s countRaw=countRaw+1
+        w:countRaw>1 ","
+        
+        w:QMeta.columnCount>1 "{"
+         for ColNum=1:1:QMeta.columnCount
+         {
+            w:ColNum>1 ","
+            s val=DataSet.%GetData(ColNum)
+            s nam=QMeta.columns.GetAt(ColNum).colName
+            if QMeta.columnCount>1  w $zcvt(""""_$zcvt(nam,"O","JS")_""":","O","UTF8")
+            if val="" {
+                 w """"""""
+            }elseif (+val=val) {
+                ; w $zcvt($zcvt(val,"O","JS"),"O","UTF8")
+                 w $zcvt(val,"O","JS")
+             }elseif (val="") {
+                w "null"
+             }else{
+                ; w $zcvt(""""_$zcvt(val,"O","JS")_"""","O","UTF8")
+                w """"_$zcvt(val,"O","JS")_""""
+             }
+         }  
+        w:QMeta.columnCount>1 "}"
+      }
+     w "]"
+     q
+ztError   
+    w "[]"
+    q
+]]></Implementation>
+</Method>
+
+<Method name="GetSqlJSON">
+<Description><![CDATA[
+<pre>
+Возвращает строку JSON
+  w ##class(HTML.CacheLib).GetSqlJSON("SELECT * FROM test")
+  w ##class(HTML.CacheLib).GetSqlJSON("select distinct(EdIsm) from Refs.PlanDataList")
+</pre>]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>sql:%String=""</FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+       q:sql="" "[]"
+      q:$l(SqlStrTmp,"insert")>1 "[]"
+      q:$l(SqlStrTmp,"update")>1 "[]"
+      q:$l(SqlStrTmp,"delete")>1 "[]"
+      q:$l(SqlStrTmp,"create ")>1 "[]"
+      q:$l(SqlStrTmp,"alter ")>1 "[]"
+      q:$l(SqlStrTmp,"drop ")>1 "[]"
+      q:$l(SqlStrTmp,"call ")>1 "[]"
+     #dim stres as %SQL.StatementResult
+     s st=##class(%SQL.Statement).%New()
+     d st.%Prepare(sql)
+     s stres=st.%Execute()
+     s colcount=st.%Metadata.columnCount
+     for i=1:1:colcount
+     {
+          s columns(i)=st.%Metadata.columns.GetAt(i).colName
+     }
+     s resultlist=""
+     while stres.%Next()
+     {
+          s resultrow=""
+          for i=1:1:colcount
+          {
+               s rowname=columns(i)
+               s rowdata=stres.%GetData(i)
+               s rowitem=""""_$zcvt(rowname,"O","JS")_""":"""_$zcvt(rowdata,"O","JS")_""""
+               s resultrow=resultrow_$lb(rowitem)
+          }
+          s resultrow="{"_$lts(resultrow)_"}"
+          s resultlist=resultlist_$lb(resultrow)
+     }
+     //ret "["_$lts(resultlist,","_$c(13,10))_"]"
+     // ret $zcvt("["_$lts(resultlist)_"]","O","UTF8")
+     ret "["_$lts(resultlist)_"]"
+]]></Implementation>
+</Method>
+
+<Method name="WriteSqlXML">
+<Description><![CDATA[
+<pre>
+Вывести JSON массив данных из SQL запроса (без аргументов SQL)
+ d ##class(HTML.CacheLib).WriteSqlXML("select top 10 * from Auth.SysUser")
+</pre>]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>SqlStr:%String=""</FormalSpec>
+<Implementation><![CDATA[
+       if $l(SqlStr)=0 w "[]" q
+      s SqlStrTmp=$ZCVT(SqlStr,"L")
+      q:$l(SqlStrTmp,"insert")>1 "[]"
+      q:$l(SqlStrTmp,"update")>1 "[]"
+      q:$l(SqlStrTmp,"delete")>1 "[]"
+      q:$l(SqlStrTmp,"create ")>1 "[]"
+      q:$l(SqlStrTmp,"alter ")>1 "[]"
+      q:$l(SqlStrTmp,"drop ")>1 "[]"
+      q:$l(SqlStrTmp,"call ")>1 "[]"
+      s $ztrap="ztError"
+      s SQLobj=##class(%SQL.Statement).%New()
+      d SQLobj.%Prepare(SqlStrTmp)
+      s DataSet=SQLobj.%Execute()
+      s QMeta=DataSet.%GetMetaData()
+      s jsonTab = ##class(%Library.ListOfDataTypes).%New()
+      s countRaw=0
+      w "<?xml version=""1.0""?>"
+      w "<list>"
+      while DataSet.%Next()
+      {
+          w "<raw>"
+         for ColNum=1:1:QMeta.columnCount
+         {
+            s val=DataSet.%GetData(ColNum)
+            s val=$zcvt(val,"O","XML")
+            s nam=QMeta.columns.GetAt(ColNum).colName
+            s nam=$zcvt(nam,"O","XML")
+            w "<"_nam_">"
+            w val
+            w "</"_nam_">"
+         }  
+          w "</raw>"
+      }
+     w "</list>"
+     
+     q
+ztError   
+    w "[]"
+    q
+]]></Implementation>
+</Method>
+
+<Method name="WriteSqlRAW">
+<Description><![CDATA[
+<pre>
+ Вывести RAW массив данных из SQL запроса (без аргументов SQL)
+ Разделение между полями 'tab'  $c(9)
+ Разделение между строками 'enter' $c(10)
+ d ##class(HTML.CacheLib).WriteSqlRAW("select top 10 * from Auth.SysUser",$c(9),$c(10))
+</pre>]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>SqlStr:%String="",Razdel=$c(9),NewLine=$c(10)</FormalSpec>
+<Implementation><![CDATA[
+       if $l(SqlStr)=0 w "" q
+      s SqlStrTmp=$ZCVT(SqlStr,"L")
+      q:$l(SqlStrTmp,"insert")>1 ""
+      q:$l(SqlStrTmp,"update")>1 ""
+      q:$l(SqlStrTmp,"delete")>1 ""
+      q:$l(SqlStrTmp,"create ")>1 ""
+      q:$l(SqlStrTmp,"alter ")>1 ""
+      q:$l(SqlStrTmp,"drop ")>1 ""
+      q:$l(SqlStrTmp,"call ")>1 ""
+      s $ztrap="ztError"
+      s SQLobj=##class(%SQL.Statement).%New()
+      d SQLobj.%Prepare(SqlStrTmp)
+      s DataSet=SQLobj.%Execute()
+      s QMeta=DataSet.%GetMetaData()
+      s jsonTab = ##class(%Library.ListOfDataTypes).%New()
+      s countRaw=0
+      for ColNum=1:1:QMeta.columnCount
+      {
+         w:ColNum'=1 Razdel 
+         s nam=QMeta.columns.GetAt(ColNum).colName
+         s nam=$zcvt(nam,"O","JS")
+         w nam
+      }  
+      while DataSet.%Next()
+      {
+         w NewLine 
+         for ColNum=1:1:QMeta.columnCount
+         {
+            s val=DataSet.%GetData(ColNum)
+            s val=$zcvt(val,"O","JS")
+            w:ColNum>1 Razdel 
+            w val
+         }  
+      }
+     
+     q
+ztError   
+    w ""
+    q
+]]></Implementation>
+</Method>
+
+<Method name="ExecFrag">
+<Description>
+Метод разбики исходного текста на Cache` код и HTML текст</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>SrcCode="",Beg="",End=""</FormalSpec>
+<Implementation><![CDATA[
+     q:SrcCode=""
+     q:Beg=""
+     q:End=""
+     for ind=1:1:$l(SrcCode,End){
+        s tmp=$p(SrcCode,End,ind)
+        s Html=$p(tmp,Beg,1)
+        s Code=$p(tmp,Beg,2)
+        w Html
+        TRY {
+           x Code
+        } CATCH ErrorHandle { 
+           zw ErrorHandle 
+        }
+     }
+]]></Implementation>
+</Method>
+
+<Method name="ExecBigFrag">
+<Description><![CDATA[
+<br> Метод разбивки исходного текста на Cache` код и HTML текст
+<br> при этом создается временная MAC  программа и выполняется на стороне сервера]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>SrcCode="",Beg="/*[",End="]*/"</FormalSpec>
+<Implementation><![CDATA[
+     q:SrcCode=""
+     q:Beg=""
+     q:End=""
+     for ind=1:1:$l(SrcCode,End){
+         s tmp=$p(SrcCode,End,ind)
+         s Html=$p(tmp,Beg,1)
+         s Code=$p(tmp,Beg,2)
+         w Html
+         
+         D $SYSTEM.Process.NullSubscripts(0)
+         s MacName=$Replace(##THIS,".","")
+         s MacName=$Replace(MacName,"%","")
+         s MacName="mtempXDataHTML"_MacName_"Fragment"_$JOB_""
+         s routine =##class(%Routine).%New(MacName)
+         if routine="" {
+             w MacName,!
+             w Code
+         } else {
+            D routine.Write($c(13,10)_" ; d ^"_MacName_$c(13,10))
+            d routine.WriteLine(Code) 
+            k ^SPOOL($job) 
+            O 2:($job)   U 2:($job)
+            Do routine.Compile() ;
+            c 2:($job)  
+            Do routine.%Close()
+            k ^SPOOL($job) 
+            u 0
+            TRY {  x " d ^"_MacName   } CATCH ErrorHandle {         }
+            Do routine.Delete(MacName_".MAC")     
+         }
+    }
+]]></Implementation>
+</Method>
+
+<Method name="DrawObj">
+<Description>
+ Интерпритируем инициализированные объекты Cache` в JS код
+ для того, чтобы увидеть все инициализированные переменные, необходимо сделать ProcedureBlock=0
+ do ##class(HTML.CacheLib).DrawObj()</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>ReDraw=1</FormalSpec>
+<ProcedureBlock>1</ProcedureBlock>
+<Implementation><![CDATA[
+   s ^||var=""     
+   for {
+      s ^||var=$o(@^||var)
+      q:^||var=""
+      ; пропускаем системные переменные
+      continue:$l(^||var,"%")=2
+      if '$isobject(@^||var) ; если Cache переменная это объект 
+      {
+         s Value=@^||var
+         s isScob=1 ; признак кавычек (isScob=1 взять элемент в кавычки)
+         if $l(Value+0)=$l(Value) {  s isScob=0
+         }elseif Value="true" {      s isScob=0
+         }elseif Value="false"{      s isScob=0
+         }elseif $ZCVT($e($tr(Value," ",""),1,8),"L")="function"{
+           s isScob=0
+         }
+         if isScob=0  w ^||var_"="_Value_" ;"_$c(13,10)
+         else         w ^||var_"='"_$REPLACE(Value,"'","\'")_"';"_$c(13,10)
+         k Value,ResTxt,isScob,isWrite
+      }else{
+         ; Создаем объекты через JS
+         d ..CreateJsObject(^||var,@^||var)
+         ; Рисуем свойства полей  
+         d ..Parse(^||var,@^||var)
+         continue:'$d(^||SendObjectList($JoB)) 
+      }
+    }
+    s ObjectName=""
+    for   s ObjectName=$o(^||SendObjectList($JoB,ObjectName))  q:ObjectName=""   d
+    .  w ^||SendObjectList($JoB,ObjectName) ; выводим элемент
+    .  s ^||SendObjectList($JoB,ObjectName)=""  ; затираем его, чтобы не выводить повторно
+    k ObjectName
+    if ReDraw=1 {
+      k ^||SendObjectList($JoB)
+      k ^||CreateObjectList($JoB)
+    }
+]]></Implementation>
+</Method>
+
+<Method name="Parse">
+<Description>
+Создаем все свойства объекта</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>ObjectName,Object</FormalSpec>
+<Implementation><![CDATA[
+     s res=""
+     s ClassName=$p(Object,"@",2)
+     Set param=""
+     For  {
+           ; %DataType
+           if ClassName="%ZEN.proxyObject" {
+             Set param=$o(Object.%data(param))
+           }else{
+             Set param=$$$comMemberNext(ClassName,"a",param) 
+           }
+           Quit:param=""
+           continue:$l(param,"%")>1
+           continue:param="NS" 
+           continue:param="tagName" ; название тэга, применяется при создани объекта
+           continue:param="parentElement" ; название родителя, применяется при выстраивании иерархии объектов
+           continue:param="isWrite" ; стары признак передачи (не применяется)
+           ; continue:param="Content"
+           ; continue:param="Param"
+           ; continue:param="Style"
+           s $ztrap="err"
+           ; если вимени параметров есть символы _ - % , тогда помещаем в кводратные скобки
+           if $l(param,"_")>1 s ParamStr="["""_param_"""]",  isK=1
+           if $l(param,"%")>1 s ParamStr="["""_param_"""]", isK=1
+           if $l(param,"-")>1 s ParamStr="["""_param _"""]", isK=1
+           if '$d(isK) s ParamStr=param
+           s value=$zObjProperty(Object,param)
+           s isListener=0 
+           ; если в имени присутствует  первые символы "on" значит добавляем в объект слушателя событий
+           if $zcvt($e(param,1,2),"L")="on"   s isListener=1,ParamStr=$e(ParamStr,3,$l(ParamStr))
+              if $isobject(value){
+                 s valueTxt=..Parse(ObjectName_"."_ParamStr, value)_""
+                 w valueTxt
+              }else{
+                  if isListener=1 { ; если надо довать как слушателя событий
+                      if $l(value," ")=1{ ; если в функции нет символов " " тогда добавляем как стороннюю функцию
+                          s valueTxt=ObjectName_".addEventListener('"_ParamStr_"',"_value_");"_$c(13,10)  
+                      }else{ ; иначе вставляем как строеннуюю функцию
+                       s valueTxt=ObjectName_".addEventListener('"_ParamStr_"',function(){"_value_"});"_$c(13,10)
+                      }
+                  }else{
+                       ; если вначале текста значения присутствует слово "function", значит добавляем значение без кавычек
+                      if $ZCVT($e(value,1,8),"L")="function"{ 
+                         s valueTxt=ObjectName_"."_ParamStr_"="_value_";"_$c(13,10)
+                      }else{ ; иначе добавляем значение обрамленые в кавычки
+                        if $d(^||JSObjectList($JoB,ObjectName)){
+                          s valueTxt=ObjectName_".setAttribute('"_ParamStr_"', '"_$REPLACE(value,"'","\'")_"'); "
+                        }else{
+                          s valueTxt=ObjectName_"."_ParamStr_"='"_$REPLACE(value,"'","\'")_"';"_$c(13,10)
+                        }
+                      }
+                  }
+                 w valueTxt
+             }
+err         
+       k ParamStr,isK,value,valueTxt,isListener
+     }
+     ; добавляем методы в JS объекты
+     // s res=res_..AddMethodFromClass(ClassOref,ObjectName)
+     k ClassName,ClassOref,ProperInd
+     q res
+]]></Implementation>
+</Method>
+
+<Method name="CreateJsObject">
+<Description>
+создаем JS объекты со свойствами (Фоновое построение дерева объектов)</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>ObjectName,Object</FormalSpec>
+<Implementation><![CDATA[
+     ; Если JS объект уже создавался, тогда пропускаем новое создание
+     q:$d(^||CreateObjectList($JoB,ObjectName))
+     s res="",parentFound=0
+     s ClassName=$p(Object,"@",2)
+     Set param=""
+     For  {
+          if ClassName="%ZEN.proxyObject" {
+             Set param=$o(Object.%data(param))
+          }else{
+             Set param=$$$comMemberNext(ClassName,"a",param) 
+          }
+          Quit:param=""
+          if param="tagName"{
+              s NS=""
+              if $d(^oddCOM(ClassName,"p","NS")){
+                  x "s ^||SendObjectListNSElementUrl($job)="_ObjectName_".#NS "
+                  s NS=^||SendObjectListNSElementUrl($job)
+                  k ^||SendObjectListNSElementUrl($job)
+              }
+              
+              if NS="" {  
+                 s ^||CreateObjectList($JoB,ObjectName)=ObjectName_"=document.createElementNS('http://www.w3.org/1999/xhtml','"_$zObjProperty(Object,"tagName")_"');"_$c(13,10)
+              } else {
+                  ; s:NS'="http://www.w3.org/1999/xhtml" ^JSObjectList($JoB,ObjectName)=1
+                  ; s:$l(NS,"html")=1 ^JSObjectList($JoB,ObjectName)=1
+                  s ^||CreateObjectList($JoB,ObjectName)= ObjectName_"=document.createElementNS('"_NS_"','"_$zObjProperty(Object,"tagName")_"');"_$c(13,10)
+              }
+          }
+          s $ZTRAP="ErrorAddElement"
+         if param="parentElement"{ ; если обнаружен родительский элемент, тогда помещяем в него  обрабатываемый
+              s parentFound=1
+              if $l($zObjProperty(Object,"parentElement"))=0 {
+                  s ^||SendObjectList($JoB,ObjectName)= "   document.body.appendChild("_ObjectName_");"_$c(13,10)
+              }else{
+                   if $isobject($zObjProperty(Object,"parentElement")){
+                      s ParentObjName=^CacheObjectList($JoB,$zObjProperty(Object,"parentElement") )
+                   } else {
+                      s ParentObjName=$zObjProperty(Object,"parentElement")
+                   }
+                   s ^||SendObjectList($JoB,ObjectName)=" if (typeof("_ParentObjName_") != 'undefined') {   "_$c(13,10)
+                   s ^||SendObjectList($JoB,ObjectName)=^||SendObjectList($JoB,ObjectName)_ParentObjName_".appendChild("_ObjectName_");"_$c(13,10)
+                   s ^||SendObjectList($JoB,ObjectName)=^||SendObjectList($JoB,ObjectName)_"}else{ "_$c(13,10)
+                   s ^||SendObjectList($JoB,ObjectName)=^||SendObjectList($JoB,ObjectName)_"  "_ParentObjName_"=document.getElementsByTagName('"_ParentObjName_"')[0]; "_$c(13,10)
+                   s ^||SendObjectList($JoB,ObjectName)=^||SendObjectList($JoB,ObjectName)_"  if (typeof("_ParentObjName_") != 'undefined') {   "_$c(13,10)
+                   s ^||SendObjectList($JoB,ObjectName)=^||SendObjectList($JoB,ObjectName)_"   "_ParentObjName_".appendChild("_ObjectName_");"_$c(13,10)
+                   s ^||SendObjectList($JoB,ObjectName)=^||SendObjectList($JoB,ObjectName)_"  } else {"_$c(13,10)
+                   s ^||SendObjectList($JoB,ObjectName)=^||SendObjectList($JoB,ObjectName)_"     body = document.getElementsByTagName('html')[0]; "_$c(13,10)
+                   s ^||SendObjectList($JoB,ObjectName)=^||SendObjectList($JoB,ObjectName)_"     body.appendChild("_ObjectName_");  "_$c(13,10)
+                   s ^||SendObjectList($JoB,ObjectName)=^||SendObjectList($JoB,ObjectName)_"  }"_$c(13,10)
+                   s ^||SendObjectList($JoB,ObjectName)=^||SendObjectList($JoB,ObjectName)_"} "_$c(13,10)
+              }
+         }
+         continue
+ErrorAddElement
+     }
+     if parentFound=0 { ; если родитель не найден, значит выводим в тело
+        s ^||SendObjectList($JoB,ObjectName)="document.body.appendChild("_ObjectName_");"_$c(13,10)   
+     }
+     s ObjectName=""
+     for   s ObjectName=$o(^||CreateObjectList($JoB,ObjectName))  q:ObjectName=""   d
+     .  w ^||CreateObjectList($JoB,ObjectName) ; выводим элемент
+     .  s ^||CreateObjectList($JoB,ObjectName)=""  ; затираем его, чтобы не выводить повторно
+     k ObjectName
+     ; s ^CreateObjectList($JoB,ObjectName)=1
+     k parentFound,ParentObjName, param,ClassName
+     q res
+]]></Implementation>
+</Method>
+
+<Method name="sleep">
+<Description>
+Пауза в программе</Description>
+<FormalSpec>sleepDuration</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+   var now = new Date().getTime();
+   while(new Date().getTime() < now + sleepDuration){ /* do nothing */ }
+]]></Implementation>
+</Method>
+
+<Method name="readJson">
+<Description><![CDATA[
+<pre> 
+ Функция вычитывает значения из формы в JSON объект
+<basefont name="Courier New"><basefont name="Courier New">&nbsp; &nbsp;<font color="#000000">&lt;</font><font color="#ff0000">input&nbsp;</font><font color="#000080">class</font><font color="#000000">=</font><font color="#800080">'dat'&nbsp;</font><font color="#000080">ID</font><font color="#000000">=</font><font color="#800080">'Param1'</font><font color="#000000">&gt; </font><br>
+&nbsp;&nbsp;<font color="#000000">var texts=readJson('dat','id'); // 'dat'- имя применяемого класса стиля</font><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#000000">// 'id' - имя атрибута значение которого пойдет в имя поля</font><br>
+</pre> ]]></Description>
+<FormalSpec>NameClass,IdName</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+ if ((''+IdName)=='undefined'){ IdName='id';}
+            var elements= document.querySelectorAll('.'+NameClass);
+            var texts="{"; 
+            var indRes=0
+            for (var ind  in elements) {
+                   if ((''+parseInt(''+ind))=='NaN'){continue; }
+                   // var id=elements[ind].id;
+                   var id=elements[ind].getAttribute(IdName);
+                   val=elements[ind].value;
+                   if ((''+val)=='undefined'){
+                       val=elements[ind].innerHTML; 
+                    }
+                   if ((''+id)=='undefined'){continue; }
+                   if ((''+id)=='null'){continue; }
+                   if ((''+id)==''){continue; }
+                   if ((''+val)=='undefined'){continue;}
+                   indRes++;
+                   if (indRes!=1){texts+=",";}
+                   texts+='"'+id+'":"'+encodeURI(val)+'"';
+            }
+            texts+="}"; 
+            return JSON.parse(texts);
+]]></Implementation>
+</Method>
+
+<Method name="toJson">
+<Description>
+
+преобразовать элемент в JSON строку
+</Description>
+<FormalSpec>arg</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+     var str='';
+     var arr= new Array();
+     var objRes={};
+     var EofList=['srcElement','childElementCount','namespaceURI','nodeType','baseURI','path','formAction','offsetParent','namespaceURI','outerHTML','previousElementSibling','nextElementSibling','children','firstChild','lastChild','ownerDocument','childNodes','outerText','outerHTML','localName','scrollTop','scrollLeft','scrollWidth','scrollHeight','wordBreak','wordSpacing','wordWrap'];
+     var SubObjList=['style','attributes','dataset'];
+     for(var ind in arg){
+          if (typeof arg[ind] ==='function'){continue;}
+          if (ind.substring(0,2)=='on'){continue;}
+          if (ind.indexOf('_')!=-1){continue;}
+          if ((ind+'').indexOf('parent')!=-1){continue;}
+          if ((ind+'').indexOf('webkit')!=-1){continue;}
+          if ((ind+'').indexOf('word')!=-1){continue;}
+          if ((ind+'').indexOf('isConnected')!=-1){continue;}
+          if (EofList.indexOf(ind)!=-1){continue;}
+         if (SubObjList.indexOf(ind)!=-1){
+              var subObj={};
+            for(var indSub in arg[ind]){
+                 if (typeof arg[ind][indSub] ==='function'){continue;}
+               if ((indSub+'').indexOf('webkit')!=-1){continue;}
+               if ((indSub+'').indexOf('word')!=-1){continue;}
+               if ((indSub+'').indexOf('transition')!=-1){continue;}
+               if ((''+arg[ind][indSub])==''){continue;}
+                 subObj[indSub]=''+arg[ind][indSub];
+            }
+           objRes[ind]=subObj;
+            continue;
+         }
+
+          if (typeof arg[ind] ==='object'){continue;};
+         objRes[ind]=arg[ind];
+     }
+     /* document.getElementById("info").innerHTML=JSON.stringify(objRes);*/
+     return objRes;
+]]></Implementation>
+</Method>
+
+<Method name="ArrayToSelect">
+<Description><![CDATA[
+JS Функция записи массив в ComboBox
+<example>  
+<select id="ComboBox1" multiple><select>
+<script language="javascript">
+   var obj=['111','222','3333','3333','3333','3333'];
+   myChangeFun=function(){    alert(this.value);      }
+   ArrayToSelect("ComboBox1",obj,myChangeFun);
+</script>
+<example>  ]]></Description>
+<FormalSpec>IdElement,JsonArray,FunctionOnChange</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+ Parent=document.getElementById(IdElement);
+ for (var ind=0;ind<JsonArray.length;ind++){
+    var txt=JsonArray[ind];
+    var val=JsonArray[ind];
+    var sel=null;
+    if (typeof JsonArray[ind] === 'object' ) {
+         subIndLoc=0;
+         for(subInd in JsonArray[ind]){
+            subIndLoc++;
+            if (subIndLoc==1) {  val=JsonArray[ind][subInd]; }
+            if (subIndLoc==2) {  txt=JsonArray[ind][subInd]; }
+            if (subIndLoc==3) {  if (JsonArray[ind][subInd]==true) {sel=true;} }
+            if (subIndLoc>3) {   break; }
+         }
+    }else{
+       JsonArray[ind]={'val':null,'txt':JsonArray[ind],'select':false};    
+    }
+    var x = document.createElement("OPTION");
+    // x.dataset['itemindex']=ind;
+    if(val!=null){
+      x.setAttribute("value", val);
+    }
+    if (sel!=null){
+      x.setAttribute("selected", true);
+    }
+    var t = document.createTextNode(txt);
+    x.appendChild(t);
+    Parent.appendChild(x);
+ }
+ addActivityItem = function()
+ {
+     //  JsonArray[this.selectedIndex].sel=true;
+     for (var i = 0; i < this.options.length; i++){
+        if (this.options[i].selected) {
+          JsonArray[i].select=true;
+        }else{
+          JsonArray[i].select=false;
+        }
+     }
+ }
+ if (typeof FunctionOnChange === 'function' ) {
+    Parent.addEventListener("change", FunctionOnChange, true);
+ }else{
+    if ((FunctionOnChange != null ) &&(typeof FunctionOnChange !== 'undefined' ) 
+    ){      
+      FunctionOnChange=addActivityItem;
+    }
+    Parent.addEventListener("change", addActivityItem, true);    
+ }
+]]></Implementation>
+</Method>
+
+<Method name="testZHTMLjsCacheLibLib">
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+</Method>
+
+<Method name="InitCacheLib">
+<Description>
+Метод инициализации </Description>
+<Language>javascript</Language>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+  if (typeof Element.prototype.addEventListener === 'undefined') {
+    Element.prototype.addEventListener = function (e, callback) {
+      e = 'on' + e;
+      return this.attachEvent(e, callback);
+    };
+  }
+     // <include-js src='User.Test'></include-js> " 
+     var includeLibraryJS =null;
+     if (typeof HTMLElement !== 'undefined') {     
+       includeLibraryJS = Object.create(HTMLElement.prototype);    
+     }else{
+       includeLibraryJS = new Object(Element.prototype);    
+     }
+     includeLibraryJS.createdCallback = function() {};   
+     includeLibraryJS.attachedCallback = function() {   
+      var ss = document.createElementNS("http://www.w3.org/1999/xhtml",'script');
+          ss.language = 'javascript';
+      var scr = runMethod('HTML.CacheLib.readJSFunctionFromCacheClass',this.getAttribute('src'));
+          scr +=runMethod('HTML.CacheLib.readJSPrototypeFromCacheClass',this.getAttribute('src'));
+          ss.text=scr;
+          document.getElementsByTagName('head')[0].appendChild(ss);
+     };   
+     if (document.registerElement!=undefined){    
+         document.registerElement('include-js', {  prototype: includeLibraryJS  });   
+     }
+    
+     
+     // <include-css src='User.Test'></include-css>    
+     if (typeof HTMLElement !== 'undefined') {     
+       includeLibraryCSS = Object.create(HTMLElement.prototype);    
+     }else{
+       includeLibraryCSS = new Object(Element.prototype);    
+     }
+     includeLibraryCSS.createdCallback = function() {};   
+     includeLibraryCSS.attachedCallback = function() {   
+      var ss = document.createElementNS("http://www.w3.org/1999/xhtml",'style');
+          ss.language = 'javascript';
+      var scr = runMethod('HTML.CacheLib.readJSFunctionFromCacheClass',this.getAttribute('src'));
+          ss.text=scr;
+          document.getElementsByTagName('head')[0].appendChild(ss);
+     };   
+     if (document.registerElement!=undefined){    
+         document.registerElement('include-css', {  prototype: includeLibraryCSS   });   
+     }
+]]></Implementation>
+</Method>
+</Class>
+</Export>
