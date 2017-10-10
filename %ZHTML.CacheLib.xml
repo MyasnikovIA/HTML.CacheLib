@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.2 (Build 651)" ts="2017-10-06 22:37:11">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.2 (Build 651)" ts="2017-10-11 05:26:46">
 <Class name="%ZHTML.CacheLib">
 <Description><![CDATA[
 
@@ -50,12 +50,12 @@
          w "Test Message:" _arg
          q ""
      }
-  }
+  }g
 </example> 
 <pre>
 
     б) Подключаем базовую библиотеку на  CSP странице:
-         <script src='%25ZHTML.CacheLib.cls' type='text/javascript' ></script>
+         &lt;script src='%25ZHTML.CacheLib.cls' type='text/javascript' &gt;&lt;/script&gt;
     в) Синхронный вызов класс метода:
 </pre>
 <example> 
@@ -308,7 +308,7 @@
    }
  </example>]]></Description>
 <Super>%CSP.Page</Super>
-<TimeChanged>64562,80840.019044</TimeChanged>
+<TimeChanged>64567,19581.404347</TimeChanged>
 <TimeCreated>64460,57309.205077</TimeCreated>
 
 <Method name="OnPreHTTP">
@@ -343,17 +343,20 @@
     
     #define cspEncode(%k,%d)      $translate($System.Encryption.AESBase64Encode(%d,%k),"+=/"_$char(32,13,10),"_-$") 
     #define cspDecode(%k,%d)      $System.Encryption.AESBase64Decode($translate(%d,"_-$","+=/"),%k) 
-         ;   k ^SPOOL($job) 
-         ;   O 2:($job) 
-         ;   U 2:($job)
-         ;   ; zw head
-         ;   zw %request
-         ;   c 2:($job)  
+            k ^SPOOL($job) 
+            O 2:($job) 
+            U 2:($job)
+            ; zw head
+            zw %request
+            c 2:($job)  
          ;   USE $ZUTIL(53):(::"M")
      if %request.Get("cspIntRunMethod",0)=1 {
         s WEVENT=%request.Get("WEVENT","")
         s %method=$p(WEVENT,".",$l(WEVENT,"."))
         s %class=$e(WEVENT,1,$l(WEVENT)-$l(%method)-1)
+        if %class="."{
+            s:$d(%request.CgiEnvs("HTTP_REFERER")) %class= $SYSTEM.CSP.GetClassName(%request.CgiEnvs("HTTP_REFERER"))
+        }
         s WEVENT=$c(1)_WEVENT
         s WEVENT= $$$cspEncode(%session.Key,"1"_WEVENT)
         d %request.Set("WEVENT",WEVENT)
@@ -428,33 +431,58 @@
 <Method name="ExecRunMethod">
 <ClassMethod>1</ClassMethod>
 <Implementation><![CDATA[
-     Set newList="",setList=""
-     #; Get class and method name from event assume if WARGC is not present it is 0
+     ; Set newList="",setList=""
+     ; #; Get class and method name from event assume if WARGC is not present it is 0
+     ; Set count=$Get(%request.Data("WARGC",1),0)
+     ; if '$d(^oddDEF(%class,"m",%method,42)) {
+     ;      Set code="Do ##class("_%class_")."_%method_"("
+     ; } Else {
+     ;      Set code="w ##class("_%class_")."_%method_"("
+     ; }
+     ; #; get arguments for method; 'null' values become undefined
+     ; For i=1:1:count {
+     ;      If i>1 Set code=code_","
+     ;      Set arg="WARG_"_i
+     ;      If $Data(%request.Data(arg,1)) {
+     ;           Set code=code_"%request.Data("""_arg_""",1)"
+     ;      } ElseIf $Data(%request.Data("WLIST"_i,1)) {
+     ;           Set var="W"_i
+     ;           Set code=code_"."_var
+     ;          Set newList=newList_$select(newList="":"new ",1:",")_var
+     ;          For j=1:1:%request.Data("WLIST"_i,1) {
+     ;                If $Data(%request.Data(var,j)) {
+     ;                     Set setList=setList_" set "_var_"("_j_")=%request.Data("""_var_""","_j_") "
+     ;                }
+     ;           }
+     ;      }
+     ; }
+     ; Set code=newList_$select(newList="":"",1:" ")_setList_code_")"
+     ; x code
+     
      Set count=$Get(%request.Data("WARGC",1),0)
-     if '$d(^oddDEF(%class,"m",%method,42)) {
-          Set code="Do ##class("_%class_")."_%method_"("
-     } Else {
-          Set code="w ##class("_%class_")."_%method_"("
-     }
-     #; get arguments for method; 'null' values become undefined
+     set args=count
+     s numArg=0
      For i=1:1:count {
-          If i>1 Set code=code_","
           Set arg="WARG_"_i
           If $Data(%request.Data(arg,1)) {
-               Set code=code_"%request.Data("""_arg_""",1)"
+               s numArg=numArg+1
+               set args(numArg) = %request.Data(arg,1)
           } ElseIf $Data(%request.Data("WLIST"_i,1)) {
                Set var="W"_i
-               Set code=code_"."_var
-               Set newList=newList_$select(newList="":"new ",1:",")_var
                For j=1:1:%request.Data("WLIST"_i,1) {
                     If $Data(%request.Data(var,j)) {
-                         Set setList=setList_" set "_var_"("_j_")=%request.Data("""_var_""","_j_") "
+                         s numArg=numArg+1
+                         set args(numArg) = %request.Data(var,j)
                     }
                }
           }
      }
-     Set code=newList_$select(newList="":"",1:" ")_setList_code_")"
-     x code
+     
+     if '$d(^oddDEF(%class,"m",%method,42)) {
+          do $classmethod(%class, %method, args...)
+     } Else {
+          w $classmethod(%class, %method, args...)
+     }
 ]]></Implementation>
 </Method>
 
@@ -583,7 +611,7 @@
            if ClassOref.Methods.GetAt(i).Language="cache" {
                    w !,"var "_ClassOref.Methods.GetAt(i).Name_"=function(){",!
                   if $d(^oddDEF(ParentClassName,"m",ClassOref.Methods.GetAt(i).Name,42)){ w "return "}
-                   w " runMethod('"_ParentClassName_"."_ClassOref.Methods.GetAt(i).Name_"',arguments);"
+                   w "   return runMethod('"_ParentClassName_"."_ClassOref.Methods.GetAt(i).Name_"',arguments);"
                    w !,"};"
            }
                 
@@ -820,11 +848,12 @@
                            }else{  
                             w !,"     this."_MethodName_"=function(){",!
                            }
-                         if $d(^oddDEF(ParentClassName,"m",MethodName,42)){     
-                            w "       return runMethod('"_ParentClassName_"."_MethodName_"',arguments);"
-                         }else{
-                            w "       runMethod('"_ParentClassName_"."_MethodName_"',arguments);"
-                         }
+                           ; if $d(^oddDEF(ParentClassName,"m",MethodName,42)){     
+                           ;    w "       return runMethod('"_ParentClassName_"."_MethodName_"',arguments);"
+                           ; }else{
+                           ;    w "       runMethod('"_ParentClassName_"."_MethodName_"',arguments);"
+                           ; }
+                           w "       return runMethod('"_ParentClassName_"."_MethodName_"',arguments);"
                         w !,"     };"
               }else{
                  w "       runMethod('"_ParentClassName_"."_MethodName_"',arguments);"
@@ -1064,11 +1093,12 @@
          }else{
          ; if ^oddDEF(ParentClassName,"m",MethodName,32)="cache" {
                w !,"     "_NamePrototupe_"."_MethodName_"=function(){",!
-               if $d(^oddDEF(ParentClassName,"m",MethodName,42)){     
-                  w "       return runMethod('"_ParentClassName_"."_MethodName_"',arguments);"
-               }else{
-                  w "       runMethod('"_ParentClassName_"."_MethodName_"',arguments);"
-               }
+             ;  if $d(^oddDEF(ParentClassName,"m",MethodName,42)){     
+             ;     w "       return runMethod('"_ParentClassName_"."_MethodName_"',arguments);"
+             ;  }else{
+             ;     w "       runMethod('"_ParentClassName_"."_MethodName_"',arguments);"
+             ;  }
+               w "       return runMethod('"_ParentClassName_"."_MethodName_"',arguments);"
                w !,"     };"
          }     
        }
@@ -1571,6 +1601,14 @@ This matches up unescaping that is done by CSP.</Description>
 <ServerOnly>1</ServerOnly>
 </Property>
 
+<Method name="runMethodAbort">
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[     req.abort(); // убиваем запрос
+]]></Implementation>
+</Method>
+
 <Method name="cspIntRunMethod">
 <FormalSpec>method,args,async,CallBackFun</FormalSpec>
 <Language>javascript</Language>
@@ -1603,10 +1641,11 @@ This matches up unescaping that is done by CSP.</Description>
      // alert(data);
      // data = data + "&cspIntRunMethod=1";
         ResulFromSrv=null;
-        if (CallBackFun!=null){
+     //   if (CallBackFun!=null){
+        if (async==true){
             req = new XMLHttpRequest();
             req.open("POST", url, async);
-               req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
             req.onreadystatechange = function() {
               if (this.readyState == 4 && this.status == 200) {
                  if (typeof CallBackFun === 'function'){
@@ -1616,6 +1655,7 @@ This matches up unescaping that is done by CSP.</Description>
               };
            };
            req.send(data);
+           ResulFromSrv=req;
         }else{
             var request = new XMLHttpRequest();
             request.open('POST', url, async);
