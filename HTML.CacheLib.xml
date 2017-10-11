@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.2 (Build 651)" ts="2017-10-11 05:26:53">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2013.1.4 (Build 801)" ts="2017-10-11 09:10:59">
 <Class name="HTML.CacheLib">
 <Description><![CDATA[
 
@@ -308,7 +308,7 @@
    }
  </example>]]></Description>
 <Super>%CSP.Page</Super>
-<TimeChanged>64567,19514.598426</TimeChanged>
+<TimeChanged>64567,32548.928704</TimeChanged>
 <TimeCreated>64555,56521.47789</TimeCreated>
 
 <Method name="OnPreHTTP">
@@ -343,12 +343,12 @@
     
     #define cspEncode(%k,%d)      $translate($System.Encryption.AESBase64Encode(%d,%k),"+=/"_$char(32,13,10),"_-$") 
     #define cspDecode(%k,%d)      $System.Encryption.AESBase64Decode($translate(%d,"_-$","+=/"),%k) 
-            k ^SPOOL($job) 
-            O 2:($job) 
-            U 2:($job)
-            ; zw head
-            zw %request
-            c 2:($job)  
+          ;  k ^SPOOL($job) 
+          ;  O 2:($job) 
+          ;  U 2:($job)
+          ;  ; zw head
+          ;  zw %request
+          ;  c 2:($job)  
          ;   USE $ZUTIL(53):(::"M")
      if %request.Get("cspIntRunMethod",0)=1 {
         s WEVENT=%request.Get("WEVENT","")
