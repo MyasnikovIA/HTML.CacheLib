@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2013.1.4 (Build 801)" ts="2017-10-11 09:10:59">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.1 (Build 792)" ts="2017-10-15 19:59:50">
 <Class name="HTML.CacheLib">
 <Description><![CDATA[
 
@@ -308,7 +308,7 @@
    }
  </example>]]></Description>
 <Super>%CSP.Page</Super>
-<TimeChanged>64567,32548.928704</TimeChanged>
+<TimeChanged>64571,71849.108727</TimeChanged>
 <TimeCreated>64555,56521.47789</TimeCreated>
 
 <Method name="OnPreHTTP">
@@ -610,7 +610,7 @@
            // Получаем JS представление Cache класс метода
            if ClassOref.Methods.GetAt(i).Language="cache" {
                    w !,"var "_ClassOref.Methods.GetAt(i).Name_"=function(){",!
-                  if $d(^oddDEF(ParentClassName,"m",ClassOref.Methods.GetAt(i).Name,42)){ w "return "}
+                   ; if $d(^oddDEF(ParentClassName,"m",ClassOref.Methods.GetAt(i).Name,42)){ w "return "}
                    w "   return runMethod('"_ParentClassName_"."_ClassOref.Methods.GetAt(i).Name_"',arguments);"
                    w !,"};"
            }
@@ -1605,7 +1605,7 @@ This matches up unescaping that is done by CSP.</Description>
 <Language>javascript</Language>
 <WebMethod>1</WebMethod>
 <ClientMethod>1</ClientMethod>
-<Implementation><![CDATA[     req.abort(); // убиваем запрос
+<Implementation><![CDATA[     cspIntRunMethodRequest.abort(); // убиваем запрос
 ]]></Implementation>
 </Method>
 
@@ -1619,7 +1619,7 @@ This matches up unescaping that is done by CSP.</Description>
      var i;
      var url = "HTML.CacheLib.cls/?cspIntRunMethod=1";
      var n;
-     var req;
+     var cspIntRunMethodRequest;
      var data = "WARGC=" + (args.length - 1) + "&WEVENT=" + method.replace(/&amp;/,'&');
      for (i = 1; i < args.length; i++) {
           arg = args[i];
@@ -1643,19 +1643,19 @@ This matches up unescaping that is done by CSP.</Description>
         ResulFromSrv=null;
      //   if (CallBackFun!=null){
         if (async==true){
-            req = new XMLHttpRequest();
-            req.open("POST", url, async);
-            req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-            req.onreadystatechange = function() {
+            cspIntRunMethodRequest = new XMLHttpRequest();
+            cspIntRunMethodRequest.open("POST", url, async);
+            cspIntRunMethodRequest.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            cspIntRunMethodRequest.onreadystatechange = function() {
               if (this.readyState == 4 && this.status == 200) {
                  if (typeof CallBackFun === 'function'){
                      CallBackFun(this.responseText);
                  }
-                 req=null;
+                 cspIntRunMethodRequest=null;
               };
            };
-           req.send(data);
-           ResulFromSrv=req;
+           cspIntRunMethodRequest.send(data);
+           ResulFromSrv=cspIntRunMethodRequest;
         }else{
             var request = new XMLHttpRequest();
             request.open('POST', url, async);
@@ -1665,7 +1665,7 @@ This matches up unescaping that is done by CSP.</Description>
                 ResulFromSrv=request.responseText;
                 // console.log(ResulFromSrv);
            }
-           req=null;
+           cspIntRunMethodRequest=null;
         }
    return ResulFromSrv;
 ]]></Implementation>
