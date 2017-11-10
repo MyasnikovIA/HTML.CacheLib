@@ -1,315 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.1 (Build 792)" ts="2017-10-15 19:59:45">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.1 (Build 792)" ts="2017-11-10 23:13:59">
 <Class name="%ZHTML.CacheLib">
 <Description><![CDATA[
-
-<br>Скрипт(JS):
+<br>Скрипт(JS): 
 <br> &lt;script  type="text/javascript"  src='%25ZHTML.CacheLib.cls'&gt;&lt;/script&gt; 
 <br> 
-<br> <!--  <script language="JavaScript" type="text/javascript" src="%25ZHTML.CacheLib.cls"></script>  -->
-Описание:
-1) Реализована трансляция  Cache` классов в JS функции глобальные. 
-2) Реализована трансляция  Cache` классов в  прототипы JS при инициализации страницы и в коде
-3) Реализована функция динамического подключения библиотек (js и css - файлы)
-4) Реализована функция динамического подключения прототипов и глобальных функция.
-5) Реализована возможность запуска класс методов с передачей в функцией (callback) обработки результата в качестве аргумента.
-<br> 
-
-<pre>
-Динамическое подключение библиотек в JS коде:
-    а) Подключаем базовую библиотеку на  CSP странице:
-         &lt;script src='%25ZHTML.CacheLib.cls' type='text/javascript' &gt;&lt;/script&gt;
-    б) Подключение библиотек JS,CSS,cls:
-</pre>
-<example> 
-<script language="JavaScript">
-   // Подключаем библиотеку JS из класса
-   includeClass('HTML.js.WebGL.BabylonJS.babylon.cls','javascript');
-   // Подключаем JS библиотеку из файла
-   includeFile('https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js','javascript');
-   // Подключаем JS библиотеку из файла
-   includeFile('https://jQuery.min.js');
-   // Подключаем CSS библиотеку из файла
-   includeFile('https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css','css');
-  </script>
-</example> 
-<pre>
-
-Примечание : Функции расположенные внутри, подключаемых классов, станут доступны после полной инициализации страницы.
-
-
-Применение функции runMethod :
-
-     а) Создаем классметод:
-</pre>
-<example> 
-  Class User.test
-  {
-    ClassMethod Test1 (arg) As %String
-    {
-         w "Test Message:" _arg
-         q ""
-     }
-  }g
-</example> 
-<pre>
-
-    б) Подключаем базовую библиотеку на  CSP странице:
-         &lt;script src='%25ZHTML.CacheLib.cls' type='text/javascript' &gt;&lt;/script&gt;
-    в) Синхронный вызов класс метода:
-</pre>
-<example> 
-                <script language="JavaScript">
-                      alert ( runMethod('User.test.Test1', 'arg1233') );
-                </script>
-</example> 
-     г) Асинхронный вызов класс метода:
-<example> 
- <script language="JavaScript">
-    /// функция обработки ответа
-    resultFun=function(txt){    alert(txt);       }
-    runMethod('User.test.Test1',resultFun,'arg1233');
- </script>
-</example> 
-     д) Вызов класс метода Test2 расположенного на странице CSP:
-<example> 
-  <script language="JavaScript">
-    /// функция обработки ответа
-    resultFun=function(txt){    alert(txt);       }
-    runMethod('Test2',resultFun,'arg1233');
-  </script>
-</example> 
-
-Расположение глобальной JS функции в Cache` классе:
-     а) Создаем класс:
-<example> 
-  Class User.test  Extends %ZHTML.CacheLib
-  {
-     ClassMethod Test1(fff,ddd) [ Language = cache, WebMethod ]
-     {
-        w fff_"---"_ddd
-     }
-     ClassMethod Test2(Arg1,Arg2) As %String [ Language = cache, WebMethod ]
-     {
-        q Arg1_"----Вар2----"_Arg2
-     }
-     ClientMethod Test3(Arg1) As %String [ Language = javascript, WebMethod ]
-     {
-        alert(Arg1);
-     }
-  }
-</example> 
-<pre>
-
-    б) Подключаем базовую библиотеку на  CSP странице:
-         <script src='User.test.cls' type='text/javascript' ></script>
-    в) Синхронный вызов класс метода:
-                <script language="JavaScript">
-                      alert (Test1('arg1233'));
-                </script>
-     г) Асинхронный вызов класс метода:
-</pre>
-<example> 
- <script language="JavaScript">
-    /// функция обработки ответа
-    resultFun=function(txt){ alert(txt); }
-    Test1(resultFun,'arg1233');
- </script>
-</example> 
-<pre>
-Примечание : в ClassMethod и ClientMethod необходимо указывать  параметр WebMethod  и язык написания кода Language = javascript .
-Создание JS прототипа в Cache` классе
-         а) Создаем класс:
-</pre>
-<example> 
- Class User.Prototyp Extends (%ZHTML.CacheLib, User.Prototype2, User.NewClass2)
- {
-  /// Альтернативное название прототипа.
-  /// Если этого параметра нет, тогда имя прототипа
-  /// берется из имени класса “Prototyp”
-  Parameter ClassName = "ClassName";
-  /// Публичные переменные прототипа
-  Property Pole1 As %String [ InitialExpression = "Value1", Internal ];
-  Property Pole2 As %String [ InitialExpression = "Value2", Internal ];
-  Property Pole3 As %String [ Internal ];
-  /// Конструктор прототипа
-  ClientMethod Prototyp(arg1 = "") As %String [ Internal, Language = javascript ]
-  {
-     this.Pole1=arg1;
-  }
-  ClassMethod Test() As %String [ Internal, Language = cache ]
-  {
-     zw
-     q ""
-  }
-  ClientMethod Test3(arg1 = "") As %String [ Internal, Language = javascript ]
-  {
-    alert(arg1);
-  }
- }
-</example> 
-<pre>
-
-    б) Подключаем базовую библиотеку на  CSP странице:
-         <script src='User.Prototyp.cls' type='text/javascript' ></script>
-    в)  Применение прототипа:
-</pre>
-<example> 
-   <script  language="JavaScript">
-     var edit=new Prototyp('Test-Prototyp');// Создаем экземпляр прототипа
-     alert(edit.Pole1); // обращение к переменной
-     alert(edit.Test());// синхронный вызов функции
-     retunFun=function(txt){ alert(txt); }
-     edit.Test(retunFun); // асинхронный вызов
-     edit.Test3(retunFun,'Args123')// асинхронный вызов
-  </script>
-</example> 
-
-<pre>
-Примечание :
-1)       При наследовании прототипов все свойства и методы родителей, так же наследуются.
-2)       Для включения элемента в состав прототипа необходимо указать параметр “ Internal” и название языка написания кода “Language = javascript”.
-3)       Из класс метода Cache невозможно напрямую обращаться к полям прототипа. В ClientMethod  поля прототипа доступны по JS правилам.
-4)       Если в прототипе описана глобальная функция (с параметром WebMethod  ) она будет интерпретирована как глобальная функция
-Пример создания глобальной переменной JS в классе Cache
-Добавляем в параметр Property свойство "[ServerOnly = 1]" при интерпритации класса это поле превратится в глобальную JS переменную.
-</pre>
-<example> 
- Class Demo.Three.Panarama2 Extends %CSP.Page
- {
-     Property GlobalVar1 As %String [ InitialExpression = {$h}, ServerOnly = 1 ];
-     Property GlobalVar2 As %String [ InitialExpression = "Тестовый текст инициируется при загрузке страницы", ServerOnly = 1 ];
-     ClientMethod MyAlert(arg) [ Language = javascript, WebMethod ]
-     {
-       alert(arg);
-     }
-     ClassMethod OnPage() As %Status
-     {
-        &html<
-          <script src='%25ZHTML.CacheLib.cls' type='text/javascript' ></script> 
-          <script type='text/javascript' >
-             alert(GlobalVar1);
-             MyAlert(GlobalVar2);
-          </script> 
-        >
-        q $$$OK
-     }
- }
-</example> 
-<pre>
-
-Пример вызова Cache сода из JS клиент метода
-Добавляем в параметр Property свойство "[ServerOnly = 1]" при интерпритации класса это поле превратится в глобальную JS переменную.
-</pre>
-<example> 
-  Class Demo.Delete Extends %CSP.Page
-  {
-          ClientMethod MyAlert(arg) [ Language = javascript, WebMethod ]
-          {
-              //  /*(  'Команда cache'  )*/
-              // Выполнить однострочную команду 
-              alert(' /*( w $zdt($h))*/ '+arg)
-          }
-          ClassMethod OnPage() As %Status
-          {
-              &html<
-                  <script src='%25ZHTML.CacheLib.cls' type='text/javascript' ></script> 
-                   <script language='javascript'>
-                      MyAlert('Тестовое сообщение');
-                 </script>
-              >
-              Quit $$$OK
-          }
-    }
- </example>
-         
-  <h3>Создание собственного HTML элемента в Cache классе (работа с прототипами). </h3>
-  Создаем прототип HTML элемента:
- <example>
-  Class User.Prototyp2 Extends %ZHTML.CacheLib
-  {
-  /// Название класса для создания элемента из JS
-  Parameter ClassName = "TestHtmlTag";
-  /// имя тэга <my-input>0</my-input>
-  Parameter tagName = "my-input";
-  Property timer As %Integer [ InitialExpression = 0, Internal ];
-  /// содержимое Тэга
-  Property innerHTML As %String [ InitialExpression = "Value1", Internal ];
-  /// JS Конструктор HTML элемента
-  ClientMethod prototyp2(arg1 = "") As %String [ Internal, Language = javascript ]
-  {
-    this.Pole1=arg1;
-  }
-  /// запуск таймера
-  ClientMethod attachedCallback() As %String [ Internal, Language = javascript ]
-  {
-     setInterval(this.tick.bind(this), 1000);
-  }
-  /// Функция срабатывает после создания элемента (инициализация)
-  ClientMethod createdCallback() As %String [ Internal, Language = javascript ]
-  {
-     this.timer = 0;
-  }
-  /// функция инкремента
-  ClientMethod tick() As %String [ Internal, Language = javascript ]
-  {
-      this.timer++;
-      this.innerHTML = this.timer;
-  }
-  
-  }
-  
- </example>
-  Создание HTML элемента в CSP файле
- <example>
-  <html>
-  <head>
-  <title> Cache Server Page </title>
-  </head>
-  <body>
-    <script src='%25ZHTML.CacheLib.cls' type='text/javascript' ></script>
-    <script src='User.Prototyp2.cls' type='text/javascript' ></script>
-    <my-input>222222</my-input>
-  </body>
-  </html>
- </example>
- <h3> Подключение JS библиотек из классов </h3>
- <example>
-
- /// Подключаемый класс
- Class User.Test
- {
-    ClientMethod MyAlert(txt) [ Language = javascript, WebMethod ]
-    {
-       alert(txt);
-    }
- 
- }
-
-   /// Применение  <include-js src="User.Test"></include-js>
-   Class User.includeTest Extends %CSP.Page
-   {
-   
-   ClassMethod OnPage() As %Status
-   {
-     &html<
-       <script src='%25ZHTML.CacheLib.cls' type='text/javascript' ></script>       
-       <include-js src="User.Test"></include-js>
-       <include-css src='User.Test'></include-css>
-     >
-    &html<
-       <script type='text/javascript' >
-         MyAlert('ssssssssssss');
-      </script>
-     >
-      Quit $$$OK
-   }
-   
-   }
- </example>]]></Description>
+<br> <!--  <script language="JavaScript" type="text/javascript" src="%25ZHTML.CacheLib.cls"></script>  -->]]></Description>
 <Super>%CSP.Page</Super>
-<TimeChanged>64571,71962.096708</TimeChanged>
-<TimeCreated>64460,57309.205077</TimeCreated>
+<TimeChanged>64597,83618.346089</TimeChanged>
+<TimeCreated>64597,83398.886619</TimeCreated>
 
 <Method name="OnPreHTTP">
 <ClassMethod>1</ClassMethod>
@@ -317,7 +16,9 @@
 <Implementation><![CDATA[
      ; s %response.CharSet="CP1251"
      if %request.Get("cspIntRunMethod",0)=1 {
-         Do %response.SetHeader("Content-Type","text/plain")   
+	     if %response.ContentType="text/html" {
+            Do %response.SetHeader("Content-Type","text/plain")   
+	     }
          q 1   
      }
      Do %response.SetHeader("Content-Type","application/javascript")   
@@ -341,24 +42,29 @@
     
     
     
-    #define cspEncode(%k,%d)      $translate($System.Encryption.AESBase64Encode(%d,%k),"+=/"_$char(32,13,10),"_-$") 
-    #define cspDecode(%k,%d)      $System.Encryption.AESBase64Decode($translate(%d,"_-$","+=/"),%k) 
+     #define cspEncode(%k,%d)      $translate($System.Encryption.AESBase64Encode(%d,%k),"+=/"_$char(32,13,10),"_-$") 
+     #define cspDecode(%k,%d)      $System.Encryption.AESBase64Decode($translate(%d,"_-$","+=/"),%k) 
           ;  k ^SPOOL($job) 
           ;  O 2:($job) 
           ;  U 2:($job)
           ;  ; zw head
-          ;  zw %request
+          ;  zw %request 
           ;  c 2:($job)  
-         ;   USE $ZUTIL(53):(::"M")
+          ;  USE $ZUTIL(53):(::"M")
      if %request.Get("cspIntRunMethod",0)=1 {
-        s WEVENT=%request.Get("WEVENT","")
-        s %method=$p(WEVENT,".",$l(WEVENT,"."))
+	    s WEVENT=%request.Get("WEVENT","")
+	    if $l(WEVENT,".")=1 {
+           s WEVENT=$lg($$$cspDecode(%session.Key,WEVENT),1) 
+           s WEVENT=$p(WEVENT,":",1) ; ????
+	    }
+	    s %method=$p(WEVENT,".",$l(WEVENT,"."))
         s %class=$e(WEVENT,1,$l(WEVENT)-$l(%method)-1)
         if %class="."{
             s:$d(%request.CgiEnvs("HTTP_REFERER")) %class= $SYSTEM.CSP.GetClassName(%request.CgiEnvs("HTTP_REFERER"))
         }
         s WEVENT=$c(1)_WEVENT
         s WEVENT= $$$cspEncode(%session.Key,"1"_WEVENT)
+        
         d %request.Set("WEVENT",WEVENT)
         s %sc=""
         s %isNewMethod=1
@@ -379,11 +85,12 @@
        w " var ThisClassName="""_$ZCVT(##this,"O","URL")_".cls""; " _$c(13,10)
        d ..readJSFunctionFromCacheClass(##this)
        
-        s ParentClassName1="%ZHTML.CacheLib"
-        s MethodName="InitCacheLib"
-        for ind=1:1:^oddDEF(ParentClassName1,"m",MethodName,30) {
-                 w ^oddDEF(ParentClassName1,"m",MethodName,30,ind)_$c(13,10)
-        }
+       // s ParentClassName1="%ZHTML.CacheLib"
+       // s MethodName="InitCacheLib"
+       // for ind=1:1:^oddDEF(ParentClassName1,"m",MethodName,30) {
+       //          w ^oddDEF(ParentClassName1,"m",MethodName,30,ind)_$c(13,10)
+       // }
+        
        d ..readJSPrototypeFromCacheClass(##this)
        d ..readJSPrototypeFromCacheClass(ParentClassName)
        d ..readJSFunctionFromCacheClass(ParentClassName)
@@ -431,34 +138,6 @@
 <Method name="ExecRunMethod">
 <ClassMethod>1</ClassMethod>
 <Implementation><![CDATA[
-     ; Set newList="",setList=""
-     ; #; Get class and method name from event assume if WARGC is not present it is 0
-     ; Set count=$Get(%request.Data("WARGC",1),0)
-     ; if '$d(^oddDEF(%class,"m",%method,42)) {
-     ;      Set code="Do ##class("_%class_")."_%method_"("
-     ; } Else {
-     ;      Set code="w ##class("_%class_")."_%method_"("
-     ; }
-     ; #; get arguments for method; 'null' values become undefined
-     ; For i=1:1:count {
-     ;      If i>1 Set code=code_","
-     ;      Set arg="WARG_"_i
-     ;      If $Data(%request.Data(arg,1)) {
-     ;           Set code=code_"%request.Data("""_arg_""",1)"
-     ;      } ElseIf $Data(%request.Data("WLIST"_i,1)) {
-     ;           Set var="W"_i
-     ;           Set code=code_"."_var
-     ;          Set newList=newList_$select(newList="":"new ",1:",")_var
-     ;          For j=1:1:%request.Data("WLIST"_i,1) {
-     ;                If $Data(%request.Data(var,j)) {
-     ;                     Set setList=setList_" set "_var_"("_j_")=%request.Data("""_var_""","_j_") "
-     ;                }
-     ;           }
-     ;      }
-     ; }
-     ; Set code=newList_$select(newList="":"",1:" ")_setList_code_")"
-     ; x code
-     
      Set count=$Get(%request.Data("WARGC",1),0)
      set args=count
      s numArg=0
@@ -1574,6 +1253,7 @@ This matches up unescaping that is done by CSP.</Description>
 <ClientMethod>1</ClientMethod>
 <Implementation><![CDATA[
     var fun=null;
+    var FunProgress=null;
     var arr=new Array();
     if ((''+runMethod.arguments[1])=='[object Arguments]'){
       arr.push(runMethod.arguments[0]);     
@@ -1587,11 +1267,18 @@ This matches up unescaping that is done by CSP.</Description>
          arr.splice(1, 1);
        }
     }
+     if (arr.length>1){
+       if (typeof arr[1] === 'function'){
+         FunProgress=arr[1];
+         arr.splice(1, 1);
+       }
+    }
+    
     //        alert(JSON.stringify(arr) );
     if (fun==null){
         return cspIntRunMethod(MethodName,arr,false);
     }else{
-        return cspIntRunMethod(MethodName,arr,true,fun);    
+        return cspIntRunMethod(MethodName,arr,true,fun,FunProgress);    
     }
 ]]></Implementation>
 </Method>
@@ -1609,8 +1296,47 @@ This matches up unescaping that is done by CSP.</Description>
 ]]></Implementation>
 </Method>
 
+<Method name="cspHttpServerMethod">
+<FormalSpec>MethodName</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+    var fun=null;
+    var FunProgress=null;
+    var arr=new Array();
+    if ((''+cspHttpServerMethod.arguments[1])=='[object Arguments]'){
+      arr.push(cspHttpServerMethod.arguments[0]);     
+      for(var ind in cspHttpServerMethod.arguments[1]){if (cspHttpServerMethod.arguments[1][ind]==undefined){continue;} arr.push(cspHttpServerMethod.arguments[1][ind]); }   
+    }else{
+      for(var ind in cspHttpServerMethod.arguments){if (cspHttpServerMethod.arguments[ind]==undefined){continue;} arr.push(cspHttpServerMethod.arguments[ind]); }   
+    }
+    
+    if (arr.length>1){
+       if (typeof arr[1] === 'function'){
+         fun=arr[1];
+         arr.splice(1, 1);
+       }
+    }
+ 
+    if (arr.length>1){
+       if (typeof arr[1] === 'function'){
+         FunProgress=arr[1];
+         arr.splice(1, 1);
+       }
+    }
+ 
+    //        alert(JSON.stringify(arr) );
+    if (fun==null){
+        return cspIntRunMethod(MethodName,arr,false);
+    }else{
+        return cspIntRunMethod(MethodName,arr,true,fun,FunProgress);    
+    }
+]]></Implementation>
+</Method>
+
 <Method name="cspIntRunMethod">
-<FormalSpec>method,args,async,CallBackFun</FormalSpec>
+<FormalSpec>method,args,async,CallBackFun,FunProgress</FormalSpec>
 <Language>javascript</Language>
 <WebMethod>1</WebMethod>
 <ClientMethod>1</ClientMethod>
@@ -1620,6 +1346,19 @@ This matches up unescaping that is done by CSP.</Description>
      var url = "%25ZHTML.CacheLib.cls/?cspIntRunMethod=1";
      var n;
      var cspIntRunMethodRequest;
+     var myVarsetInterval=null;
+     /* // TimeOut  */
+     var myStopFunctionsetInterval=function () {  clearTimeout(myVarsetInterval);   }
+     if (FunProgress!=null){
+         myVarsetInterval= setTimeout(function run() {
+           FunProgress();
+           myVarsetInterval=setTimeout(run, 1000);
+         }, 1000);
+     }
+     /*  // Interval
+       var myStopFunctionsetInterval=function () {  clearInterval(myVarsetInterval);   }
+       if (FunProgress!=null){ myVarsetInterval= setInterval( FunProgress , 1000); 	   }
+     */
      var data = "WARGC=" + (args.length - 1) + "&WEVENT=" + method.replace(/&amp;/,'&');
      for (i = 1; i < args.length; i++) {
           arg = args[i];
@@ -1652,6 +1391,9 @@ This matches up unescaping that is done by CSP.</Description>
                      CallBackFun(this.responseText);
                  }
                  cspIntRunMethodRequest=null;
+                 if (myVarsetInterval!=null){
+                     myStopFunctionsetInterval();
+                 }
               };
            };
            cspIntRunMethodRequest.send(data);
@@ -1663,9 +1405,10 @@ This matches up unescaping that is done by CSP.</Description>
             request.send(data);
             if (request.status === 200) {
                 ResulFromSrv=request.responseText;
-                // console.log(ResulFromSrv);
+                //  console.log(ResulFromSrv);
            }
            cspIntRunMethodRequest=null;
+           myStopFunctionsetInterval();
         }
    return ResulFromSrv;
 ]]></Implementation>
@@ -1683,8 +1426,8 @@ This matches up unescaping that is done by CSP.</Description>
     if (PrototypeClass==null){PrototypeClass=ParentClassName;}
       var ss = document.createElementNS("http://www.w3.org/1999/xhtml",'script');
           ss.language = 'javascript';
-      var scr = runMethod('%Z%25ZHTML.CacheLib.readJSFunctionFromCacheClass',PrototypeClass);
-          scr +=runMethod('%Z%25ZHTML.CacheLib.readJSPrototypeFromCacheClass',PrototypeClass);
+      var scr = runMethod('%ZHTML.CacheLib.readJSFunctionFromCacheClass',PrototypeClass);
+          scr +=runMethod('%ZHTML.CacheLib.readJSPrototypeFromCacheClass',PrototypeClass);
           ss.text=scr;
           document.getElementsByTagName('head')[0].appendChild(ss);
 ]]></Implementation>
@@ -2508,26 +2251,35 @@ ErrorAddElement
 <Implementation><![CDATA[
  if ((''+IdName)=='undefined'){ IdName='id';}
             var elements= document.querySelectorAll('.'+NameClass);
-            var texts="{"; 
+            var texts={}; 
             var indRes=0
             for (var ind  in elements) {
                    if ((''+parseInt(''+ind))=='NaN'){continue; }
-                   // var id=elements[ind].id;
                    var id=elements[ind].getAttribute(IdName);
                    val=elements[ind].value;
                    if ((''+val)=='undefined'){
-                       val=elements[ind].innerHTML; 
-                    }
+                       val=encodeURI(elements[ind].innerHTML); 
+                   }
                    if ((''+id)=='undefined'){continue; }
                    if ((''+id)=='null'){continue; }
                    if ((''+id)==''){continue; }
+                   if ((''+elements[ind])=='[object HTMLSelectElement]'){
+	                  if (elements[ind]['multiple']==true){
+ 	                      texts[id]=[];
+	                      for (var i=0; i < elements[ind].options.length; i++) {
+                             if (elements[ind].options[i].selected) {
+                               var valEl=elements[ind].options[i].value;
+                               texts[id].push(valEl);
+                             }
+                          }
+ 	                      continue;
+                      }
+                   }
                    if ((''+val)=='undefined'){continue;}
                    indRes++;
-                   if (indRes!=1){texts+=",";}
-                   texts+='"'+id+'":"'+encodeURI(val)+'"';
+                   texts[id]=val;
             }
-            texts+="}"; 
-            return JSON.parse(texts);
+            return texts;
 ]]></Implementation>
 </Method>
 
@@ -2565,7 +2317,7 @@ ErrorAddElement
                if ((''+arg[ind][indSub])==''){continue;}
                  subObj[indSub]=''+arg[ind][indSub];
             }
-           objRes[ind]=subObj;
+            objRes[ind]=subObj;
             continue;
          }
 
@@ -2656,52 +2408,6 @@ JS Функция записи массив в ComboBox
 Метод инициализации </Description>
 <Language>javascript</Language>
 <ClientMethod>1</ClientMethod>
-<Implementation><![CDATA[
-  if (typeof Element.prototype.addEventListener === 'undefined') {
-    Element.prototype.addEventListener = function (e, callback) {
-      e = 'on' + e;
-      return this.attachEvent(e, callback);
-    };
-  }
-     // <include-js src='User.Test'></include-js> " 
-     var includeLibraryJS =null;
-     if (typeof HTMLElement !== 'undefined') {     
-       includeLibraryJS = Object.create(HTMLElement.prototype);    
-     }else{
-       includeLibraryJS = new Object(Element.prototype);    
-     }
-     includeLibraryJS.createdCallback = function() {};   
-     includeLibraryJS.attachedCallback = function() {   
-      var ss = document.createElementNS("http://www.w3.org/1999/xhtml",'script');
-          ss.language = 'javascript';
-      var scr = runMethod('%ZHTML.CacheLib.readJSFunctionFromCacheClass',this.getAttribute('src'));
-          scr +=runMethod('%ZHTML.CacheLib.readJSPrototypeFromCacheClass',this.getAttribute('src'));
-          ss.text=scr;
-          document.getElementsByTagName('head')[0].appendChild(ss);
-     };   
-     if (document.registerElement!=undefined){    
-         document.registerElement('include-js', {  prototype: includeLibraryJS  });   
-     }
-    
-     
-     // <include-css src='User.Test'></include-css>    
-     if (typeof HTMLElement !== 'undefined') {     
-       includeLibraryCSS = Object.create(HTMLElement.prototype);    
-     }else{
-       includeLibraryCSS = new Object(Element.prototype);    
-     }
-     includeLibraryCSS.createdCallback = function() {};   
-     includeLibraryCSS.attachedCallback = function() {   
-      var ss = document.createElementNS("http://www.w3.org/1999/xhtml",'style');
-          ss.language = 'javascript';
-      var scr = runMethod('%ZHTML.CacheLib.readJSFunctionFromCacheClass',this.getAttribute('src'));
-          ss.text=scr;
-          document.getElementsByTagName('head')[0].appendChild(ss);
-     };   
-     if (document.registerElement!=undefined){    
-         document.registerElement('include-css', {  prototype: includeLibraryCSS   });   
-     }
-]]></Implementation>
 </Method>
 </Class>
 </Export>
