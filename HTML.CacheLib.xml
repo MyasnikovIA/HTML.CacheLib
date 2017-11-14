@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.1 (Build 792)" ts="2017-11-10 23:07:48">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2017.1 (Build 792)" ts="2017-11-14 17:16:56">
 <Class name="HTML.CacheLib">
 <Description><![CDATA[
  
@@ -308,7 +308,7 @@
    }
  </example>]]></Description>
 <Super>%CSP.Page</Super>
-<TimeChanged>64597,82758.62997</TimeChanged>
+<TimeChanged>64601,55524.210517</TimeChanged>
 <TimeCreated>64555,56521.47789</TimeCreated>
 
 <Method name="OnPreHTTP">
@@ -331,8 +331,8 @@
 <ClassMethod>1</ClassMethod>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-    if $d(%request.Data("include")){
-         
+   ;  if $d(%request.Data("include")){
+    if %request.Get("include","")'=""{
         s includeClassName=%request.Get("include","")
         if $e(includeClassName,$l(includeClassName)-3,$l(includeClassName))=".cls"{
             s includeClassName=$e(includeClassName,1,$l(includeClassName)-4)
@@ -340,8 +340,8 @@
         d ..readJSFunctionFromCacheClass(includeClassName)
         q $$$OK
     }  
-     #define cspEncode(%k,%d)      $translate($System.Encryption.AESBase64Encode(%d,%k),"+=/"_$char(32,13,10),"_-$") 
-     #define cspDecode(%k,%d)      $System.Encryption.AESBase64Decode($translate(%d,"_-$","+=/"),%k) 
+    #define cspEncode(%k,%d)      $translate($System.Encryption.AESBase64Encode(%d,%k),"+=/"_$char(32,13,10),"_-$") 
+    #define cspDecode(%k,%d)      $System.Encryption.AESBase64Decode($translate(%d,"_-$","+=/"),%k) 
           ;  k ^SPOOL($job) 
           ;  O 2:($job) 
           ;  U 2:($job)
@@ -370,27 +370,36 @@
      }
      
      if ##this="HTML.CacheLib"{
-       s ParentClassName="" 
-       s:$d(%request.CgiEnvs("HTTP_REFERER")) ParentClassName= $SYSTEM.CSP.GetClassName(%request.CgiEnvs("HTTP_REFERER"))
-       if ParentClassName'=""{    w "var ParentClassName="""_ParentClassName_".cls"";"    }
-       if $d(%request.CgiEnvs("Referer")),$d(%request.CgiEnvs("Host")){
-           s ref=$P(%request.CgiEnvs("Referer"),%request.CgiEnvs("Host"),2)
-           s ParentClassName=$SYSTEM.CSP.GetClassName(ref)
-           if ParentClassName'="" {    w "        var ParentClassName="""_ParentClassName_".cls"";"_$c(13,10)
-           }else{                      w "        var ParentClassName="""_ref_".cls"";"_$c(13,10)             }
-       }
-       w " var ThisClassName="""_$ZCVT(##this,"O","URL")_".cls""; " _$c(13,10)
-       d ..readJSFunctionFromCacheClass(##this)
+        
+        
+        
+        s ParentClassName="" 
+        if $d(%request.CgiEnvs("HTTP_REFERER")){
+	       s ParentClassName = $SYSTEM.CSP.GetClassName(%request.CgiEnvs("HTTP_REFERER"))
+        }
+        if ParentClassName'=""{ 
+           w "var ParentClassName="""_ParentClassName_".cls"";"    
+        }else{
+           s domen="http://"_%request.GetCgiEnv("HOST","") ; _"/"_%request.GetCgiEnv("AppName","")
+           s REFERER=%request.GetCgiEnv("REFERER","")
+           s ParentClassName=$e(REFERER,$l(domen)+1,$l(REFERER))
+           d:REFERER'="" %request.InsertCgiEnv("HTTP_REFERER",REFERER)   
+           S ParentClassName=$SYSTEM.CSP.GetClassName(ParentClassName,"")
+           w:ParentClassName'="" "  var ParentClassName="""_$replace(ParentClassName,"%","%25")_".cls"";"    
+        }
+
+        w " var ThisClassName="""_$ZCVT(##this,"O","URL")_".cls""; " _$c(13,10)
+        d ..readJSFunctionFromCacheClass(##this)
        
         s ParentClassName1="HTML.CacheLib"
         s MethodName="InitCacheLib"
         for ind=1:1:^oddDEF(ParentClassName1,"m",MethodName,30) {
-                 w ^oddDEF(ParentClassName1,"m",MethodName,30,ind)_$c(13,10)
+                  w ^oddDEF(ParentClassName1,"m",MethodName,30,ind)_$c(13,10)
         }
-       d ..readJSPrototypeFromCacheClass(##this)
-       d ..readJSPrototypeFromCacheClass(ParentClassName)
-       d ..readJSFunctionFromCacheClass(ParentClassName)
-       q $$$OK
+        d ..readJSPrototypeFromCacheClass(##this)
+        d ..readJSPrototypeFromCacheClass(ParentClassName)
+        d ..readJSFunctionFromCacheClass(ParentClassName)
+        q $$$OK
      }
 
 
@@ -427,6 +436,7 @@
    d ..readJSFunctionFromCacheClass(ParentClassName)
    d ..readJSFunctionFromCacheClass(##this)
    d ..readJSPrototypeFromCacheClass(##this)
+   w "/* OK */"
    Quit $$$OK
 ]]></Implementation>
 </Method>
