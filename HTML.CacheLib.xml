@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2017.1 (Build 792)" ts="2017-11-14 17:16:56">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2013.1.4 (Build 801)" ts="2017-11-15 15:47:42">
 <Class name="HTML.CacheLib">
 <Description><![CDATA[
  
@@ -44,7 +44,7 @@
 </pre>
 <example> 
   Class User.test
-  {
+  {  
     ClassMethod Test1 (arg) As %String
     {
          w "Test Message:" _arg
@@ -308,7 +308,7 @@
    }
  </example>]]></Description>
 <Super>%CSP.Page</Super>
-<TimeChanged>64601,55524.210517</TimeChanged>
+<TimeChanged>64602,56788.697542</TimeChanged>
 <TimeCreated>64555,56521.47789</TimeCreated>
 
 <Method name="OnPreHTTP">
@@ -371,11 +371,9 @@
      
      if ##this="HTML.CacheLib"{
         
-        
-        
         s ParentClassName="" 
-        if $d(%request.CgiEnvs("HTTP_REFERER")){
-	       s ParentClassName = $SYSTEM.CSP.GetClassName(%request.CgiEnvs("HTTP_REFERER"))
+        if %request.GetCgiEnv("HTTP_REFERER","")'=""{
+	       s ParentClassName = $SYSTEM.CSP.GetClassName(%request.GetCgiEnv("HTTP_REFERER",""))
         }
         if ParentClassName'=""{ 
            w "var ParentClassName="""_ParentClassName_".cls"";"    
@@ -391,11 +389,11 @@
         w " var ThisClassName="""_$ZCVT(##this,"O","URL")_".cls""; " _$c(13,10)
         d ..readJSFunctionFromCacheClass(##this)
        
-        s ParentClassName1="HTML.CacheLib"
-        s MethodName="InitCacheLib"
-        for ind=1:1:^oddDEF(ParentClassName1,"m",MethodName,30) {
-                  w ^oddDEF(ParentClassName1,"m",MethodName,30,ind)_$c(13,10)
-        }
+        ;  s ParentClassName1="HTML.CacheLib"
+        ;  s MethodName="InitCacheLib"
+        ;  for ind=1:1:^oddDEF(ParentClassName1,"m",MethodName,30) {
+        ;            w ^oddDEF(ParentClassName1,"m",MethodName,30,ind)_$c(13,10)
+        ;  }
         d ..readJSPrototypeFromCacheClass(##this)
         d ..readJSPrototypeFromCacheClass(ParentClassName)
         d ..readJSFunctionFromCacheClass(ParentClassName)
@@ -1762,8 +1760,8 @@ This matches up unescaping that is done by CSP.</Description>
     if (PrototypeClass==null){PrototypeClass=ParentClassName;}
       var ss = document.createElementNS("http://www.w3.org/1999/xhtml",'script');
           ss.language = 'javascript';
-      var scr = runMethod('%ZHTML.CacheLib.readJSFunctionFromCacheClass',PrototypeClass);
-          scr +=runMethod('%ZHTML.CacheLib.readJSPrototypeFromCacheClass',PrototypeClass);
+      var scr = runMethod('HTML.CacheLib.readJSFunctionFromCacheClass',PrototypeClass);
+          scr +=runMethod('HTML.CacheLib.readJSPrototypeFromCacheClass',PrototypeClass);
           ss.text=scr;
           document.getElementsByTagName('head')[0].appendChild(ss);
 ]]></Implementation>
