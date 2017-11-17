@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2017.1 (Build 792)" ts="2017-11-17 16:34:49">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.1 (Build 792)" ts="2017-11-17 22:09:54">
 <Class name="HTML.CacheLib">
 <Description><![CDATA[
  
@@ -308,14 +308,14 @@
    }
  </example>]]></Description>
 <Super>%CSP.Page</Super>
-<TimeChanged>64604,59669.320624</TimeChanged>
+<TimeChanged>64604,79785.64572</TimeChanged>
 <TimeCreated>64555,56521.47789</TimeCreated>
 
 <Method name="OnPreHTTP">
 <ClassMethod>1</ClassMethod>
 <ReturnType>%Library.Boolean</ReturnType>
 <Implementation><![CDATA[
-     ; s %response.CharSet="CP1251"
+     s %response.CharSet="CP1251"
      if %request.Get("cspIntRunMethod",0)=1 {
 	     if %response.ContentType="text/html" {
             Do %response.SetHeader("Content-Type","text/plain")   
@@ -1977,7 +1977,7 @@ This matches up unescaping that is done by CSP.</Description>
      return;
    }
    
-     alert(JSON.stringify(ProgressObject) );
+    // alert(JSON.stringify(ProgressObject) );
    
    if ( (''+ProgressObject['JOB'])=='undefined'){
      localStorage.removeItem(localStorageName); 
@@ -2038,6 +2038,18 @@ This matches up unescaping that is done by CSP.</Description>
                         if (localStorageName!==''){ localStorage.removeItem(localStorageName); }
                         return;
                      }
+                     if (ProgressObject['eval']!==undefined){
+	                    if (ProgressObject['eval'].length>0){
+                          try{   eval(''+ProgressObject['eval'].toString()); }catch (e) {  }
+                          ProgressObject['eval']='';
+	                    }
+                     }
+                     if (ProgressObject['js']!==undefined){
+	                    if (ProgressObject['js'].length>0){
+                          try{   eval(''+ProgressObject['js'].toString()); }catch (e) {  }
+                          ProgressObject['js']='';
+	                    }
+                     }
 	                 FunProgress(ProgressObject);
                      myVarsetInterval=setTimeout(runLocalLoopcspCallHttpServerMethod, IntervalRunJobMilSec);
                }, IntervalRunJobMilSec);
@@ -2046,7 +2058,7 @@ This matches up unescaping that is done by CSP.</Description>
 ]]></Implementation>
 </Method>
 
-<Method name="cspCallHttpServerMethodNew">
+<Method name="cspCallHttpServerMethod">
 <FormalSpec>MethodName</FormalSpec>
 <Language>javascript</Language>
 <WebMethod>1</WebMethod>
@@ -2057,11 +2069,11 @@ This matches up unescaping that is done by CSP.</Description>
     var localStorageName='';
     var FunProgress=null;
     var arr=new Array();
-    if ((''+cspCallHttpServerMethodNew.arguments[1])=='[object Arguments]'){
-      arr.push(cspCallHttpServerMethodNew.arguments[0]);     
-      for(var ind in cspCallHttpServerMethodNew.arguments[1]){if (cspCallHttpServerMethodNew.arguments[1][ind]==undefined){continue;} arr.push(cspCallHttpServerMethodNew.arguments[1][ind]); }   
+    if ((''+cspCallHttpServerMethod.arguments[1])=='[object Arguments]'){
+      arr.push(cspCallHttpServerMethod.arguments[0]);     
+      for(var ind in cspCallHttpServerMethod.arguments[1]){if (cspCallHttpServerMethod.arguments[1][ind]==undefined){continue;} arr.push(cspCallHttpServerMethod.arguments[1][ind]); }   
     }else{
-      for(var ind in cspCallHttpServerMethodNew.arguments){if (cspCallHttpServerMethodNew.arguments[ind]==undefined){continue;} arr.push(cspCallHttpServerMethodNew.arguments[ind]); }   
+      for(var ind in cspCallHttpServerMethod.arguments){if (cspCallHttpServerMethod.arguments[ind]==undefined){continue;} arr.push(cspCallHttpServerMethod.arguments[ind]); }   
     }
 
     if (arr.length>1){
@@ -2174,6 +2186,18 @@ This matches up unescaping that is done by CSP.</Description>
                         // Уничтожаем идентификатор работающего процесса
                         if (localStorageName!==''){ localStorage.removeItem(localStorageName); }
                         return;
+                     }
+                     if (ProgressObject['eval']!==undefined){
+	                    if (ProgressObject['eval'].length>0){
+                          try{   eval(''+ProgressObject['eval'].toString()); }catch (e) {  }
+                          ProgressObject['eval']='';
+	                    }
+                     }
+                     if (ProgressObject['js']!==undefined){
+	                    if (ProgressObject['js'].length>0){
+                          try{   eval(''+ProgressObject['js'].toString()); }catch (e) {  }
+                          ProgressObject['js']='';
+	                    }
                      }
 	                 FunProgress(ProgressObject);
                      myVarsetInterval=setTimeout(runLocalLoopcspCallHttpServerMethod, IntervalRunJobMilSec);
@@ -3328,10 +3352,6 @@ JS Функция записи массив в ComboBox
 <Implementation><![CDATA[
    if (typeof cspHttpServerMethod !== 'function') {
        cspHttpServerMethod = cspHttpServerMethodNew;
-   }
-   if (typeof cspCallHttpServerMethod !== 'function') {
-       cspCallHttpServerMethod = cspCallHttpServerMethodNew;
-       CallMethod = cspCallHttpServerMethodNew;
    }
 ]]></Implementation>
 </Method>
