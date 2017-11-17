@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2013.1.4 (Build 801)" ts="2017-11-15 15:47:42">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2017.1 (Build 792)" ts="2017-11-17 16:34:49">
 <Class name="HTML.CacheLib">
 <Description><![CDATA[
  
@@ -308,7 +308,7 @@
    }
  </example>]]></Description>
 <Super>%CSP.Page</Super>
-<TimeChanged>64602,56788.697542</TimeChanged>
+<TimeChanged>64604,59669.320624</TimeChanged>
 <TimeCreated>64555,56521.47789</TimeCreated>
 
 <Method name="OnPreHTTP">
@@ -322,6 +322,10 @@
 	     }
          q 1   
      }
+     if $d(%request.Data("cspIntRunJob")){             Do %response.SetHeader("Content-Type","application/javascript")  q 1  }
+     if $d(%request.Data("cspIntRunJobKillProcess")){  Do %response.SetHeader("Content-Type","application/javascript")  q 1  } 
+     if $d(%request.Data("cspIntRunJobStatus")){       Do %response.SetHeader("Content-Type","application/javascript")  q 1  }
+
      Do %response.SetHeader("Content-Type","application/javascript")   
      q 1
 ]]></Implementation>
@@ -340,6 +344,7 @@
         d ..readJSFunctionFromCacheClass(includeClassName)
         q $$$OK
     }  
+    
     #define cspEncode(%k,%d)      $translate($System.Encryption.AESBase64Encode(%d,%k),"+=/"_$char(32,13,10),"_-$") 
     #define cspDecode(%k,%d)      $System.Encryption.AESBase64Decode($translate(%d,"_-$","+=/"),%k) 
           ;  k ^SPOOL($job) 
@@ -369,6 +374,129 @@
         Quit $$$OK
      }
      
+   
+     // запуск процесса runJob
+     ; if %request.Get("cspIntRunJob","")=1 {
+     if $d(%request.Data("cspIntRunJob")){
+        // Удаление старых глобалов
+        k lvn
+        D GetDirNSP^%SYS.GD($ZU(5),"lvn")
+        s ind="" 
+        for  {
+          s ind= $o(lvn(ind))
+          q:ind=""  
+          if $l(ind, "mtempRunJobID")=2 {
+	         s glTmp="^"_ind
+	         if '$d(@glTmp@("GBL")) {   k @glTmp  continue } 
+	         if '$d(@glTmp@("JOB"))  {   k @glTmp continue } 
+	         if '$d(@glTmp@("OK"))  {   k @glTmp continue } 
+	         if '$d(@glTmp@("DatTim")){ k @glTmp continue } 
+	         if '$d(@glTmp@("Tim"))  {  k @glTmp continue } 
+	         if '$d(@glTmp@("Dat"))  {  k @glTmp continue } 
+	         ; Можно дописать старение работы процесса на основании  @glTmp@("Tim") и @glTmp@("Dat")
+
+	         ; Удуляем глобал , если процесс отсетствует
+	          s PidJob=@glTmp@("JOB")
+	          if '$DATA(^$JOB(PidJob)){  k @glTmp continue  }
+	      }
+	     }
+         k lvn
+         
+        s WEVENT=%request.Get("WEVENT","")
+	    if $l(WEVENT,".")=1 {
+           s WEVENT=$lg($$$cspDecode(%session.Key,WEVENT),1) 
+           s WEVENT=$p(WEVENT,":",1) ; ????
+	    }
+	    s %method=$p(WEVENT,".",$l(WEVENT,"."))
+        s %class=$e(WEVENT,1,$l(WEVENT)-$l(%method)-1)
+        if %class="."{
+            s:$d(%request.CgiEnvs("HTTP_REFERER")) %class= $SYSTEM.CSP.GetClassName(%request.CgiEnvs("HTTP_REFERER"))
+        }
+        s WEVENT=$c(1)_WEVENT
+        s WEVENT= $$$cspEncode(%session.Key,"1"_WEVENT)
+        d %request.Set("WEVENT",WEVENT)
+        s %sc=""
+        s %isNewMethod=1
+        s UserJobId=%request.Get("cspIntRunJob","")
+        s gl=..ExecRunJobMethod(UserJobId)
+        s ind="",count=0
+        w "{"
+        for {
+	       s ind=$o(@gl@(ind))  
+	       q:ind=""
+	       s count=count+1
+	       w:count'=1 ","
+	       w """"_$ZCVT(ind,"o","JS")_""":"""_$ZCVT(@gl@(ind),"o","JS")_""""
+        }
+        w "}"
+        Quit $$$OK
+     }     
+        
+     /// Уничтожение процесса runJob
+     if $d(%request.Data("cspIntRunJobKillProcess")){
+        if %request.Get("cspIntRunJobKillProcess","")=""{
+	        w "{""error"":""Не указан идентификатор процесса""}"
+	        Quit $$$OK
+        } 
+        s JsonStr=%request.Get("cspIntRunJobKillProcess","")
+        do ##class(%ZEN.Auxiliary.jsonProvider).%ConvertJSONToObject(JsonStr,,.override,1)
+        if $d(override.%data("JOB")){
+           d $zu(4,override.%data("JOB"))
+        }
+        if $d(override.%data("GBL")){
+	       s gl=override.%data("GBL")
+           k @gl
+           w "{""error"":""OK""}"
+           k override
+           Quit $$$OK
+        }
+        w "{""error"":""Процесс не найден""}"
+        Quit $$$OK
+     }     
+     
+     // Проверка состояния процесса runJob
+     if $d(%request.Data("cspIntRunJobStatus")){
+        if %request.Get("cspIntRunJobStatus","")=""{
+	        w "Не указан идентификатор процесса"
+	        Quit $$$OK
+        } 
+        
+        s JsonStr=%request.Get("cspIntRunJobStatus","")
+        q:$l(JsonStr)=0 $$$OK
+        do ##class(%ZEN.Auxiliary.jsonProvider).%ConvertJSONToObject(JsonStr,,.override,1)
+        q:$l(override.GBL)=0 $$$OK
+        s gl=override.GBL
+        if $l(override.JOB)=0{
+	        w "процесс не найден"
+	        k @gl
+	        q $$$OK
+        }
+        s JobID=override.JOB
+        ; проверка Наличия JOB в процесах
+        ; Если JOB несуществует, тогда ставис статус OK=1
+        if '$DATA(^$JOB(override.JOB)){
+           s @gl@("OK")=-1  
+           s @gl@("error")="Процесс с номером "_override.JOB_" в системе не найден. "
+        }
+        
+        s @gl@("DatTim")=$ZDT($h)
+        s @gl@("Dat")=$p($h,",",1)
+        s @gl@("Tim")=$p($h,",",2)
+        s ind="",count=0
+        w "{"
+        for {
+	       s ind=$o(@gl@(ind))  
+	       q:ind=""
+	       s count=count+1
+	       w:count'=1 ","
+	       w """"_$ZCVT(ind,"o","JS")_""":"""_$ZCVT(@gl@(ind),"o","JS")_""""
+        }
+        w "}"
+        Quit $$$OK
+     }    
+     
+     
+     
      if ##this="HTML.CacheLib"{
         
         s ParentClassName="" 
@@ -394,9 +522,17 @@
         ;  for ind=1:1:^oddDEF(ParentClassName1,"m",MethodName,30) {
         ;            w ^oddDEF(ParentClassName1,"m",MethodName,30,ind)_$c(13,10)
         ;  }
+        
         d ..readJSPrototypeFromCacheClass(##this)
         d ..readJSPrototypeFromCacheClass(ParentClassName)
         d ..readJSFunctionFromCacheClass(ParentClassName)
+        
+        
+        s ParentClassName1="HTML.CacheLib"
+        s MethodName="InitPostCacheLib"
+        for ind=1:1:^oddDEF(ParentClassName1,"m",MethodName,30) {
+            w ^oddDEF(ParentClassName1,"m",MethodName,30,ind)_$c(13,10)
+        }
         q $$$OK
      }
 
@@ -436,6 +572,94 @@
    d ..readJSPrototypeFromCacheClass(##this)
    w "/* OK */"
    Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="ExecRunJobMethod">
+<Description>
+запуск класс метода в паралельном потоке runJob</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>UserJobId=""</FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+     if UserJobId="" {
+       s gl="^mtempRunJobID"_$JOB_$tr($h,",")
+     } else {
+        do ##class(%ZEN.Auxiliary.jsonProvider).%ConvertJSONToObject(UserJobId,,.override,1)
+        if $d(override.%data("GBL")){
+	       s gl=override.%data("GBL")
+        }else{
+	      s gl="^mtempRunJobID"_$JOB_$tr($h,",")
+        }
+     }
+	
+     Set count=$Get(%request.Data("WARGC",1),0)
+     set @gl@("args")=count
+     s numArg=0
+     For i=1:1:count {
+          Set arg="WARG_"_i
+          If $Data(%request.Data(arg,1)) {
+               s numArg=numArg+1
+               set @gl@("args",numArg) = %request.Data(arg,1)
+          } ElseIf $Data(%request.Data("WLIST"_i,1)) {
+               Set var="W"_i
+               For j=1:1:%request.Data("WLIST"_i,1) {
+                    If $Data(%request.Data(var,j)) {
+                         s numArg=numArg+1
+                         set @gl@("args",numArg) = %request.Data(var,j)
+                    }
+               }
+          }
+     } 
+     ; Запрещаем повторный запуск классметода в паралельном процессе
+     if $d(@gl@("GBL")),@gl@("GBL")=gl
+       ,$d(@gl@("CLS")),@gl@("CLS")=%class
+       ,$d(@gl@("MET")),@gl@("MET")=%method 
+     {
+	    q gl     
+     }
+     s @gl@("GBL")=gl
+     s @gl@("CLS")=%class
+     s @gl@("MET")=%method
+     job ..runJobController(gl,%class, %method)
+     ; h 1
+     q gl
+]]></Implementation>
+</Method>
+
+<Method name="runJobController">
+<Description>
+Метод работает в паралельном потоке runJob</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>gl,class,method</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+   ; q:$d(@gl)  ; Если процесс уже работает, тогда выходим из процесса
+   s @gl@("JOB")=$job
+   s @gl@("DatTimStart")=$ZDT($h)
+   s @gl@("DatTim")=$ZDT($h)
+   s @gl@("Dat")=$p($h,",",1)
+   s @gl@("Tim")=$p($h,",",2)
+   s @gl@("OK")=0
+   s %runjob=gl
+ s $ZTRAP="errRunJob"
+   set args=@gl@("args")
+   for numArg=1:1:@gl@("args") {
+	   s val=@gl@("args",numArg)
+	   set args(numArg) = val
+   }
+   if args>0 {
+     do $classmethod(class, method, args...)
+   }else{
+     do $classmethod(class, method)
+   }
+   s @gl@("DatTimStop")=$ZDT($h)
+   s @gl@("OK")=1
+   q
+errRunJob
+   s @gl@("OK")=1   
+   s @gl@("error")=""""_$ZCVT($ZE,"O","JS")_""""   
+   q
 ]]></Implementation>
 </Method>
 
@@ -1628,7 +1852,7 @@ This matches up unescaping that is done by CSP.</Description>
 ]]></Implementation>
 </Method>
 
-<Method name="cspHttpServerMethod">
+<Method name="cspHttpServerMethodNew">
 <FormalSpec>MethodName</FormalSpec>
 <Language>javascript</Language>
 <WebMethod>1</WebMethod>
@@ -1637,11 +1861,11 @@ This matches up unescaping that is done by CSP.</Description>
     var fun=null;
     var FunProgress=null;
     var arr=new Array();
-    if ((''+cspHttpServerMethod.arguments[1])=='[object Arguments]'){
-      arr.push(cspHttpServerMethod.arguments[0]);     
-      for(var ind in cspHttpServerMethod.arguments[1]){if (cspHttpServerMethod.arguments[1][ind]==undefined){continue;} arr.push(cspHttpServerMethod.arguments[1][ind]); }   
+    if ((''+cspHttpServerMethodNew.arguments[1])=='[object Arguments]'){
+      arr.push(cspHttpServerMethodNew.arguments[0]);     
+      for(var ind in cspHttpServerMethodNew.arguments[1]){if (cspHttpServerMethodNew.arguments[1][ind]==undefined){continue;} arr.push(cspHttpServerMethodNew.arguments[1][ind]); }   
     }else{
-      for(var ind in cspHttpServerMethod.arguments){if (cspHttpServerMethod.arguments[ind]==undefined){continue;} arr.push(cspHttpServerMethod.arguments[ind]); }   
+      for(var ind in cspHttpServerMethodNew.arguments){if (cspHttpServerMethodNew.arguments[ind]==undefined){continue;} arr.push(cspHttpServerMethodNew.arguments[ind]); }   
     }
     
     if (arr.length>1){
@@ -1658,12 +1882,311 @@ This matches up unescaping that is done by CSP.</Description>
        }
     }
  
-    //        alert(JSON.stringify(arr) );
-    if (fun==null){
-        return cspIntRunMethod(MethodName,arr,false);
-    }else{
-        return cspIntRunMethod(MethodName,arr,true,fun,FunProgress);    
+    //       alert(JSON.stringify(arr) );
+    return cspIntRunMethod(MethodName,arr,true,fun,FunProgress);
+]]></Implementation>
+</Method>
+
+<Property name="cspCallIntervalFunctionArray">
+<Type>%String</Type>
+<InitialExpression>"null"</InitialExpression>
+<ServerOnly>1</ServerOnly>
+</Property>
+
+<Property name="IntervalRunJobMilSec">
+<Type>%String</Type>
+<InitialExpression>2000</InitialExpression>
+<ServerOnly>1</ServerOnly>
+</Property>
+
+<Method name="killRunJob">
+<FormalSpec>IdJob</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+	 var request3 = new XMLHttpRequest();
+     request3.open('GET', 'HTML.CacheLib.cls/?cspIntRunJobKillProcess='+encodeURIComponent(IdJob), false);
+     request3.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+     request3.send(''); 
+     // Удаляем ID из Локалсторедж
+     for (var i = 0; i < localStorage.length; i++){
+         if (IdJob==localStorage.getItem(localStorage.key(i))){
+	        localStorage.removeItem(localStorage.key(i));   
+         }
+     }
+     return request3.responseText;
+]]></Implementation>
+</Method>
+
+<Method name="GetStatusRunJob">
+<FormalSpec>IdJob</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+   var request4 = new XMLHttpRequest();
+   request4.open('GET', 'HTML.CacheLib.cls/?cspIntRunJobStatus='+encodeURIComponent(IdJob), false);
+   request4.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+   request4.send(''); 
+   return request4.responseText;
+]]></Implementation>
+</Method>
+
+<Method name="RestoreRunJob">
+<Description><![CDATA[
+<pre>
+Востановление работы процесса после перезагрузки страницы
+    ResultFunct - Функция запускается после окончания работы процесса
+	FunProgress - функция отрисовывает прогресс бар 
+	FunBeginJob - функция срабатывает если процесс уже был запущен
+	localStorageName - имя под которым хронится идентификатор предыдущего старта процесса
+</pre>]]></Description>
+<FormalSpec>ResultFunct,FunProgress,FunBeginJob,intervalRunJob,localStorageName</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+    //IntervalRunJobMilSec=2000;
+
+    if (localStorageName==''){ return; }
+    if (''+localStorageName=='undefined'){ return; }
+    var jobID=localStorage.getItem(localStorageName);
+    if (''+jobID=='null'){ return; }
+    if (typeof ResultFunct !== 'function'){  return; }
+    if (typeof FunProgress !== 'function'){  return; }
+    var request6 = new XMLHttpRequest();
+    request6.open('GET', 'HTML.CacheLib.cls/?cspIntRunJobStatus='+encodeURIComponent(jobID), false);
+    request6.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    request6.send('');    
+    if (request6.responseText.length==0){
+	   localStorage.removeItem(localStorageName);
+	   killRunJob(jobID)
+       return;
     }
+     
+   if (typeof intervalRunJob  === 'number'){
+       IntervalRunJobMilSec=intervalRunJob;
+   }
+            
+   try{
+     var ProgressObject=JSON.parse(request6.responseText)
+   }catch (e) {
+     localStorage.removeItem(localStorageName); 
+	 ResultFunct({"error":e});
+     return;
+   }
+   
+     alert(JSON.stringify(ProgressObject) );
+   
+   if ( (''+ProgressObject['JOB'])=='undefined'){
+     localStorage.removeItem(localStorageName); 
+     alert('DELET localStor');
+     return;
+   }
+   
+   if (typeof FunBeginJob === 'function'){
+         FunBeginJob();
+   }
+ 
+            var myVarsetInterval;
+            if (FunProgress!=null){
+                myVarsetInterval= setTimeout(
+                  function runLocalLoopcspCallHttpServerMethod() {
+                     request6.open('GET', 'HTML.CacheLib.cls/?cspIntRunJobStatus='+encodeURIComponent(jobID), false);
+                     request6.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                     request6.send(''); 
+                     if (request6.status !== 200) {
+	                     ResultFunct('Ошибка запроса:'+request2.status);
+                         localStorage.removeItem(localStorageName); 
+	                     clearTimeout(myVarsetInterval); 
+	                     return;
+                     }
+                     if (request6.responseText.length==0){
+	                     ResultFunct({"error":'Работа процесса прервана'});
+                         localStorage.removeItem(localStorageName); 
+	                     clearTimeout(myVarsetInterval); 
+	                     return;
+                     }
+                     if (request6.responseText=='Не указан идентификатор процесса'){
+	                     ResultFunct('Не указан идентификатор процесса');
+                         localStorage.removeItem(localStorageName); 
+	                     clearTimeout(myVarsetInterval); 
+	                     return;
+                     }
+                     try{
+                       var ProgressObject=JSON.parse(request6.responseText)
+                     }catch (e) {
+	                    // FunProgress(jobID,e); 
+	                    ResultFunct({"error":e});
+                        localStorage.removeItem(localStorageName); 
+                        clearTimeout(myVarsetInterval); 
+                        return;
+                     }
+                     if ( JSON.stringify(ProgressObject)==="{}"){
+                        ResultFunct({"error":"Работа процесса прервана"});
+                        // Уничтожаем идентификатор работающего процесса
+                        if (localStorageName!==''){ localStorage.removeItem(localStorageName); }
+                        return;
+                     }
+                     if (ProgressObject['OK']!=0){
+                        ResultFunct(ProgressObject);
+                        request6.open('GET', 'HTML.CacheLib.cls/?cspIntRunJobKillProcess='+encodeURIComponent(jobID), false);
+                        request6.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                        request6.send(''); 
+                        // Уничтожаем идентификатор работающего процесса
+                        if (localStorageName!==''){ localStorage.removeItem(localStorageName); }
+                        return;
+                     }
+	                 FunProgress(ProgressObject);
+                     myVarsetInterval=setTimeout(runLocalLoopcspCallHttpServerMethod, IntervalRunJobMilSec);
+               }, IntervalRunJobMilSec);
+        }
+   return jobID;
+]]></Implementation>
+</Method>
+
+<Method name="cspCallHttpServerMethodNew">
+<FormalSpec>MethodName</FormalSpec>
+<Language>javascript</Language>
+<WebMethod>1</WebMethod>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+    // IntervalRunJobMilSec=2000;
+    var fun=null;
+    var localStorageName='';
+    var FunProgress=null;
+    var arr=new Array();
+    if ((''+cspCallHttpServerMethodNew.arguments[1])=='[object Arguments]'){
+      arr.push(cspCallHttpServerMethodNew.arguments[0]);     
+      for(var ind in cspCallHttpServerMethodNew.arguments[1]){if (cspCallHttpServerMethodNew.arguments[1][ind]==undefined){continue;} arr.push(cspCallHttpServerMethodNew.arguments[1][ind]); }   
+    }else{
+      for(var ind in cspCallHttpServerMethodNew.arguments){if (cspCallHttpServerMethodNew.arguments[ind]==undefined){continue;} arr.push(cspCallHttpServerMethodNew.arguments[ind]); }   
+    }
+
+    if (arr.length>1){
+       if ((typeof arr[1] === 'object')||(Array.isArray(arr[1]))) {
+         obj=arr[1];
+         arr.splice(1, 1);
+         var count=0;
+         for (ind in obj){
+	       count++;
+	       if ((count==1)&&(typeof obj[ind] === 'function')&&(fun==null)){
+	          fun=obj[ind];
+	       } 
+	       
+	       if ((count==2)&&(typeof obj[ind] === 'function')&&(fun!=null)){
+	          FunProgress=obj[ind];
+	       } 
+	       if (typeof obj[ind]  === 'string'){
+	          localStorageName=obj[ind];
+	       } 
+	       if (typeof obj[ind]  === 'number'){
+		       IntervalRunJobMilSec=obj[ind];
+	       }
+         }
+       }
+     }
+     
+     // Запуск процесса , получение Идентификатора созданного процесса
+     var data = "WARGC=" + (arr.length - 1) + "&WEVENT=" + MethodName.replace(/&amp;/,'&');
+     for (i = 1; i < arr.length; i++) {
+          arg = arr[i];
+          if (typeof arg != "object") {
+               // Convert boolean to Cache value before sending
+               if (typeof arg == "boolean") arg = (arg ? 1 : 0);
+               data = data + "&WARG_" + i + "=" + encodeURIComponent(arg);
+          } else if (arg != null) {
+               n = 0;
+               for (var el in arg) {
+                    if (typeof arg[el] != "function") {
+                         data = data + "&W" + i + "=" + encodeURIComponent(arg[el]);
+                         n = n + 1;
+                    }
+               }
+               data = data + "&WLIST" + i + "=" + n;
+          }
+     }
+            // Востанавливаем состояние ранее запущеного процесса
+            var oldJobId='';
+            if (localStorageName!==''){
+                oldJobId=localStorage.getItem(localStorageName);
+                if (''+oldJobId=='null'){oldJobId='';}
+            }
+            var request1 = new XMLHttpRequest();
+            request1.open('POST', 'HTML.CacheLib.cls/?cspIntRunJob='+oldJobId, false);
+            request1.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            request1.send(data); 
+            request1.ontimeout = function (e) {
+	             alert('Время ожидания ответа вышло!!!!');
+	             return {"error":"Время ожидания ответа вышло"};
+	        }
+            // request1.onload = function () { };
+            if (request1.status !== 200) {
+               return {"ErrorCode":request1.status}
+            }
+            // document.getElementById("demo").innerHTML +='<br>'+request1.responseText;
+            var idNewJob=request1.responseText;
+            // alert(JSON.stringify(idNewJob) );
+            var request2 = new XMLHttpRequest();
+            var myVarsetInterval;
+            
+            if (FunProgress!=null){
+                myVarsetInterval= setTimeout(
+                  function runLocalLoopcspCallHttpServerMethod() {
+                     request2.open('GET', 'HTML.CacheLib.cls/?cspIntRunJobStatus='+encodeURIComponent(idNewJob), false);
+                     request2.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                     request2.send(''); 
+                     // alert(request2.responseText.length+"  "+ request2.responseText);
+                     if (request2.status !== 200) {
+	                     fun('Ошибка запроса:'+request2.status);
+	                     clearTimeout(myVarsetInterval); 
+	                     return;
+                     }
+                     if (request2.responseText.length==0){
+	                     fun('Работа процесса прервана');
+	                     clearTimeout(myVarsetInterval); 
+	                     return;
+                     }
+                     if (request2.responseText=='Не указан идентификатор процесса'){
+	                     fun('Не указан идентификатор процесса');
+	                     clearTimeout(myVarsetInterval); 
+	                     return;
+                     }
+                     try{
+                       var ProgressObject=JSON.parse(request2.responseText)
+                     }catch (e) {
+	                    fun({"error":e});
+                        clearTimeout(myVarsetInterval); 
+                        return;
+                     }
+                     if ( JSON.stringify(ProgressObject)==="{}"){
+                        fun({"error":"Работа процесса прервана"});
+                        // Уничтожаем идентификатор работающего процесса
+                        if (localStorageName!==''){ localStorage.removeItem(localStorageName); }
+                        return;
+                     }
+                     if (ProgressObject['OK']!=0){
+                        fun(ProgressObject);
+                        request2.open('GET', 'HTML.CacheLib.cls/?cspIntRunJobKillProcess='+encodeURIComponent(idNewJob), false);
+                        request2.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                        request2.send(''); 
+                        // Уничтожаем идентификатор работающего процесса
+                        if (localStorageName!==''){ localStorage.removeItem(localStorageName); }
+                        return;
+                     }
+	                 FunProgress(ProgressObject);
+                     myVarsetInterval=setTimeout(runLocalLoopcspCallHttpServerMethod, IntervalRunJobMilSec);
+               }, IntervalRunJobMilSec);
+        } 
+        
+     //        alert(JSON.stringify(arr) );
+     
+   /// запоминаем состояние идентификатора нового процесса
+   if (localStorageName!=''){
+       localStorage.setItem(localStorageName, idNewJob);
+   }
+    return idNewJob;
 ]]></Implementation>
 </Method>
 
@@ -1679,6 +2202,13 @@ This matches up unescaping that is done by CSP.</Description>
      var n;
      var cspIntRunMethodRequest;
      var myVarsetInterval=null;
+     if (CallBackFun!=null){
+        async=true;
+     }else{
+        async=false;
+    }
+
+ 
  
      /* // TimeOut  */
      var myStopFunctionsetInterval=function () {  clearTimeout(myVarsetInterval);   }
@@ -1714,7 +2244,6 @@ This matches up unescaping that is done by CSP.</Description>
      // alert(data);
      // data = data + "&cspIntRunMethod=1";
         ResulFromSrv=null;
-     //   if (CallBackFun!=null){
         if (async==true){
             cspIntRunMethodRequest = new XMLHttpRequest();
             cspIntRunMethodRequest.open("POST", url, async);
@@ -2743,6 +3272,7 @@ JS Функция записи массив в ComboBox
 <Language>javascript</Language>
 <ClientMethod>1</ClientMethod>
 <Implementation><![CDATA[
+ 
   if (typeof Element.prototype.addEventListener === 'undefined') {
     Element.prototype.addEventListener = function (e, callback) {
       e = 'on' + e;
@@ -2787,6 +3317,22 @@ JS Функция записи массив в ComboBox
      if (document.registerElement!=undefined){    
          document.registerElement('include-css', {  prototype: includeLibraryCSS   });   
      }
+]]></Implementation>
+</Method>
+
+<Method name="InitPostCacheLib">
+<Description>
+Метод инициализации после вывода всех JS функций</Description>
+<Language>javascript</Language>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+   if (typeof cspHttpServerMethod !== 'function') {
+       cspHttpServerMethod = cspHttpServerMethodNew;
+   }
+   if (typeof cspCallHttpServerMethod !== 'function') {
+       cspCallHttpServerMethod = cspCallHttpServerMethodNew;
+       CallMethod = cspCallHttpServerMethodNew;
+   }
 ]]></Implementation>
 </Method>
 </Class>
