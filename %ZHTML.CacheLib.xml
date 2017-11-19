@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.1 (Build 792)" ts="2017-11-19 11:28:35">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.1 (Build 792)" ts="2017-11-19 15:13:59">
 <Class name="%ZHTML.CacheLib">
 <Description><![CDATA[
  
@@ -308,7 +308,7 @@
    }
  </example>]]></Description>
 <Super>%CSP.Page</Super>
-<TimeChanged>64606,41258.589931</TimeChanged>
+<TimeChanged>64606,53661.364549</TimeChanged>
 <TimeCreated>64597,83398.886619</TimeCreated>
 
 <Method name="OnPreHTTP">
@@ -700,34 +700,6 @@ errRunJob
 <Method name="ExecRunMethod">
 <ClassMethod>1</ClassMethod>
 <Implementation><![CDATA[
-     ; Set newList="",setList=""
-     ; #; Get class and method name from event assume if WARGC is not present it is 0
-     ; Set count=$Get(%request.Data("WARGC",1),0)
-     ; if '$d(^oddDEF(%class,"m",%method,42)) {
-     ;      Set code="Do ##class("_%class_")."_%method_"("
-     ; } Else {
-     ;      Set code="w ##class("_%class_")."_%method_"("
-     ; }
-     ; #; get arguments for method; 'null' values become undefined
-     ; For i=1:1:count {
-     ;      If i>1 Set code=code_","
-     ;      Set arg="WARG_"_i
-     ;      If $Data(%request.Data(arg,1)) {
-     ;           Set code=code_"%request.Data("""_arg_""",1)"
-     ;      } ElseIf $Data(%request.Data("WLIST"_i,1)) {
-     ;           Set var="W"_i
-     ;           Set code=code_"."_var
-     ;          Set newList=newList_$select(newList="":"new ",1:",")_var
-     ;          For j=1:1:%request.Data("WLIST"_i,1) {
-     ;                If $Data(%request.Data(var,j)) {
-     ;                     Set setList=setList_" set "_var_"("_j_")=%request.Data("""_var_""","_j_") "
-     ;                }
-     ;           }
-     ;      }
-     ; }
-     ; Set code=newList_$select(newList="":"",1:" ")_setList_code_")"
-     ; x code
-     
      Set count=$Get(%request.Data("WARGC",1),0)
      set args=count
      s numArg=0
@@ -1856,6 +1828,29 @@ This matches up unescaping that is done by CSP.</Description>
     }else{
       for(var ind in runMethod.arguments){if (runMethod.arguments[ind]==undefined){continue;} arr.push(runMethod.arguments[ind]); }   
     }
+    
+    if (arr.length>1){
+          if ((typeof arr[1] === 'object')||(Array.isArray(arr[1]))) {
+            isCallQuery=true;
+            obj=arr[1];
+            arr.splice(1, 1);
+            var count=0;
+            for (ind in obj){
+               count++;
+               if ((count==1)&&(typeof obj[ind] === 'function')&&(fun==null)){
+                  fun=obj[ind];
+               } 
+               if ((count==2)&&(typeof obj[ind] === 'function')&&(fun!=null)){
+                   FunProgress=obj[ind];
+               } 
+               if (typeof obj[ind]  === 'number'){
+                   IntervalRunJobMilSec=obj[ind];
+               }
+            }
+        }
+       }
+       
+    
     if (arr.length>1){
        if (typeof arr[1] === 'function'){
          fun=arr[1];
@@ -1870,11 +1865,7 @@ This matches up unescaping that is done by CSP.</Description>
     }
     
     //        alert(JSON.stringify(arr) );
-    if (fun==null){
-        return cspIntRunMethod(MethodName,arr,false);
-    }else{
-        return cspIntRunMethod(MethodName,arr,true,fun,FunProgress);    
-    }
+    return cspIntRunMethod(MethodName,arr,true,fun,FunProgress);
 ]]></Implementation>
 </Method>
 
@@ -1902,6 +1893,26 @@ This matches up unescaping that is done by CSP.</Description>
       for(var ind in cspHttpServerMethodNew.arguments){if (cspHttpServerMethodNew.arguments[ind]==undefined){continue;} arr.push(cspHttpServerMethodNew.arguments[ind]); }   
     }
     
+   if (arr.length>1){
+          if ((typeof arr[1] === 'object')||(Array.isArray(arr[1]))) {
+            isCallQuery=true;
+            obj=arr[1];
+            arr.splice(1, 1);
+            var count=0;
+            for (ind in obj){
+               count++;
+               if ((count==1)&&(typeof obj[ind] === 'function')&&(fun==null)){
+                  fun=obj[ind];
+               } 
+               if ((count==2)&&(typeof obj[ind] === 'function')&&(fun!=null)){
+                   FunProgress=obj[ind];
+               } 
+              if (typeof obj[ind]  === 'number'){
+                   IntervalRunJobMilSec=obj[ind];
+               }               
+            }
+        }
+    }
     if (arr.length>1){
        if (typeof arr[1] === 'function'){
          fun=arr[1];
@@ -2112,13 +2123,6 @@ This matches up unescaping that is done by CSP.</Description>
         }
         return ProgressObject;
 ]]></Implementation>
-</Method>
-
-<Method name="cspCallHttpServerMethodNew">
-<FormalSpec>MethodName</FormalSpec>
-<Language>javascript</Language>
-<WebMethod>1</WebMethod>
-<ClientMethod>1</ClientMethod>
 </Method>
 
 <Method name="cspIntRunMethod">
@@ -3261,7 +3265,7 @@ JS Функция записи массив в ComboBox
        cspHttpServerMethod = cspHttpServerMethodNew;
    }
    if (typeof cspCallHttpServerMethod !== 'function') {
-       cspCallHttpServerMethod = cspCallHttpServerMethodNew;
+       cspCallHttpServerMethod = callJob;
    }
 ]]></Implementation>
 </Method>

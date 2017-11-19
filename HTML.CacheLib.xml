@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.1 (Build 792)" ts="2017-11-19 11:28:41">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.1 (Build 792)" ts="2017-11-19 15:13:50">
 <Class name="HTML.CacheLib">
 <Description><![CDATA[
  
@@ -308,7 +308,7 @@
    }
  </example>]]></Description>
 <Super>%CSP.Page</Super>
-<TimeChanged>64606,41154.095514</TimeChanged>
+<TimeChanged>64606,53555.035748</TimeChanged>
 <TimeCreated>64555,56521.47789</TimeCreated>
 
 <Method name="OnPreHTTP">
@@ -1856,6 +1856,27 @@ This matches up unescaping that is done by CSP.</Description>
     }else{
       for(var ind in runMethod.arguments){if (runMethod.arguments[ind]==undefined){continue;} arr.push(runMethod.arguments[ind]); }   
     }
+     if (arr.length>1){
+          if ((typeof arr[1] === 'object')||(Array.isArray(arr[1]))) {
+            isCallQuery=true;
+            obj=arr[1];
+            arr.splice(1, 1);
+            var count=0;
+            for (ind in obj){
+               count++;
+               if ((count==1)&&(typeof obj[ind] === 'function')&&(fun==null)){
+                  fun=obj[ind];
+               } 
+               if ((count==2)&&(typeof obj[ind] === 'function')&&(fun!=null)){
+                   FunProgress=obj[ind];
+               } 
+               if (typeof obj[ind]  === 'number'){
+                   IntervalRunJobMilSec=obj[ind];
+               }
+            }
+        }
+    }
+       
     if (arr.length>1){
        if (typeof arr[1] === 'function'){
          fun=arr[1];
@@ -1870,11 +1891,7 @@ This matches up unescaping that is done by CSP.</Description>
     }
     
     //        alert(JSON.stringify(arr) );
-    if (fun==null){
-        return cspIntRunMethod(MethodName,arr,false);
-    }else{
-        return cspIntRunMethod(MethodName,arr,true,fun,FunProgress);    
-    }
+    return cspIntRunMethod(MethodName,arr,true,fun,FunProgress);
 ]]></Implementation>
 </Method>
 
@@ -1901,7 +1918,26 @@ This matches up unescaping that is done by CSP.</Description>
     }else{
       for(var ind in cspHttpServerMethodNew.arguments){if (cspHttpServerMethodNew.arguments[ind]==undefined){continue;} arr.push(cspHttpServerMethodNew.arguments[ind]); }   
     }
-    
+     if (arr.length>1){
+          if ((typeof arr[1] === 'object')||(Array.isArray(arr[1]))) {
+            isCallQuery=true;
+            obj=arr[1];
+            arr.splice(1, 1);
+            var count=0;
+            for (ind in obj){
+               count++;
+               if ((count==1)&&(typeof obj[ind] === 'function')&&(fun==null)){
+                  fun=obj[ind];
+               } 
+               if ((count==2)&&(typeof obj[ind] === 'function')&&(fun!=null)){
+                   FunProgress=obj[ind];
+               } 
+               if (typeof obj[ind]  === 'number'){
+                   IntervalRunJobMilSec=obj[ind];
+               }
+            }
+        }
+    }
     if (arr.length>1){
        if (typeof arr[1] === 'function'){
          fun=arr[1];
@@ -2114,13 +2150,6 @@ This matches up unescaping that is done by CSP.</Description>
 ]]></Implementation>
 </Method>
 
-<Method name="cspCallHttpServerMethodNew">
-<FormalSpec>MethodName</FormalSpec>
-<Language>javascript</Language>
-<WebMethod>1</WebMethod>
-<ClientMethod>1</ClientMethod>
-</Method>
-
 <Method name="cspIntRunMethod">
 <FormalSpec>method,args,async,CallBackFun,FunProgress</FormalSpec>
 <Language>javascript</Language>
@@ -2146,8 +2175,8 @@ This matches up unescaping that is done by CSP.</Description>
      if (FunProgress!=null){
          myVarsetInterval= setTimeout(function run() {
            FunProgress();
-           myVarsetInterval=setTimeout(run, 1000);
-         }, 1000);
+           myVarsetInterval=setTimeout(run,IntervalRunJobMilSec);
+         }, IntervalRunJobMilSec);
      }
      /* // Interval
        var myStopFunctionsetInterval=function () {  clearInterval(myVarsetInterval);   }
@@ -3261,7 +3290,7 @@ JS Функция записи массив в ComboBox
        cspHttpServerMethod = cspHttpServerMethodNew;
    }
    if (typeof cspCallHttpServerMethod !== 'function') {
-       cspCallHttpServerMethod = cspCallHttpServerMethodNew;
+       cspCallHttpServerMethod = callJob;
    }
 ]]></Implementation>
 </Method>
