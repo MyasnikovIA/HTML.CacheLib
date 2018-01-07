@@ -2442,6 +2442,15 @@ ClientMethod InitCacheLib() [ Language = javascript ]
      if (document.registerElement!=undefined){    
          document.registerElement('include-css', {  prototype: includeLibraryCSS   });   
      }
+     
+      /// var res=#server(..Test())#;
+     if (typeof cspCallHttpServerMethod !== 'function') {
+         cspCallHttpServerMethod=runMethod;
+     }
+     /// #call(..Test())# 
+     if (typeof cspHttpServerMethod !== 'function') {
+        cspHttpServerMethod=runMethod;
+     }
 }
 
 }
