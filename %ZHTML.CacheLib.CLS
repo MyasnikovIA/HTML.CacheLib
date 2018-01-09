@@ -375,17 +375,49 @@ ClassMethod OnPage() As %Status
            if ParentClassName'="" {    w "        var ParentClassName="""_ParentClassName_".cls"";"_$c(13,10)
            }else{                      w "        var ParentClassName="""_ref_".cls"";"_$c(13,10)             }
        }
-       w " var ThisClassName="""_$ZCVT(##this,"O","URL")_".cls""; " _$c(13,10)
-       d ..readJSFunctionFromCacheClass(##this)
-       
+        w " var ThisClassName="""_$ZCVT(##this,"O","URL")_".cls""; " _$c(13,10)
+        k filtrPrototyp,filtrLib
+        d $system.OBJ.GetDependencies(##this,.included)
+        s ClassParentTmp=""
+        for {
+           s ClassParentTmp=$o(included(ClassParentTmp))
+           q:ClassParentTmp=""
+           continue:$d(filtrLib(ClassParentTmp))
+           d ..readJSFunctionFromCacheClass(ClassParentTmp)
+           s filtrLib(ClassParentTmp)=1
+        }
+        s ClassParentTmp=""
+        for {
+           s ClassParentTmp=$o(included(ClassParentTmp))
+           q:ClassParentTmp=""
+           continue:$d(filtrPrototyp(ClassParentTmp))
+           d ..readJSPrototypeFromCacheClass(ClassParentTmp)
+           s filtrPrototyp(ClassParentTmp)=1
+        }
+        k included
         s ParentClassName1="%ZHTML.CacheLib"
         s MethodName="InitCacheLib"
         for ind=1:1:^oddDEF(ParentClassName1,"m",MethodName,30) {
                  w ^oddDEF(ParentClassName1,"m",MethodName,30,ind)_$c(13,10)
         }
-       d ..readJSPrototypeFromCacheClass(##this)
-       d ..readJSPrototypeFromCacheClass(ParentClassName)
-       d ..readJSFunctionFromCacheClass(ParentClassName)
+        d $system.OBJ.GetDependencies(ParentClassName,.included)
+        s ClassParentTmp=""
+        for {
+           s ClassParentTmp=$o(included(ClassParentTmp))
+           q:ClassParentTmp=""
+           continue:$d(filtrPrototyp(ClassParentTmp))
+           d ..readJSPrototypeFromCacheClass(ClassParentTmp)
+           s filtrPrototyp(ClassParentTmp)=1
+        }
+        s ClassParentTmp=""
+        for {
+           s ClassParentTmp=$o(included(ClassParentTmp))
+           q:ClassParentTmp=""
+           continue:$d(filtrLib(ClassParentTmp))
+           d ..readJSFunctionFromCacheClass(ClassParentTmp)
+           s filtrLib(ClassParentTmp)=1
+        }
+        k included
        q $$$OK
      }
 
